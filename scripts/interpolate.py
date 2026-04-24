@@ -20,7 +20,7 @@ import geopandas as gpd
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-WEB = ROOT / "web"
+WEB = ROOT / "docs"
 
 DECADES = [1970, 1980, 1990, 2000, 2010, 2020]
 

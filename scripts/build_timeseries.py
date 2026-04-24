@@ -23,7 +23,7 @@ import geopandas as gpd
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-WEB = ROOT / "web"
+WEB = ROOT / "docs"
 
 WANTED_COUNTIES = {
     ("36", "005"), ("36", "047"), ("36", "061"), ("36", "081"), ("36", "085"),

@@ -18,7 +18,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-WEB = ROOT / "web"
+WEB = ROOT / "docs"
 WEB.mkdir(exist_ok=True)
 
 # NYC + bordering counties, keyed by state FIPS.
