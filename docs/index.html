@@ -308,15 +308,21 @@
       endpoints are excluded. Tracts with no neighborhood match (typically large parks or
       unincorporated fragments at county edges) are excluded from the rankings but still
       appear on the map.</p>
-    <p><b>Masking low-count tracts.</b> Tracts with fewer than 50 children in either the
-      "from" or "to" year are drawn in neutral gray rather than an extreme color. Without this
-      mask the map is dominated by two kinds of artifacts: (a) parks, cemeteries, and
-      institutional sites (Rikers Island, Prospect Park, Green-Wood Cemetery, Brooklyn Navy
-      Yard) where the AREALM water-and-landmark clip didn't fully remove the polygon and the
-      residual sliver shows "−100%"; (b) tracts whose 1970 count is a crosswalk fraction
-      (0.1–5 children) because the historical tract barely overlapped today's 2010 tract — a
-      2023 count of 1,000 children divided by 0.1 is mathematically +999,900% but not a
-      meaningful story. Totals and ranked lists are unaffected; only the map color is masked.</p>
+    <p><b>Tracts built from nothing.</b> A few tracts genuinely went from near-zero child
+      population to substantial — Battery Park City and Hudson Yards (landfill that didn't
+      exist as residential land in 1970), Tribeca and Long Island City-Hunters Point (former
+      industrial waterfront converted to residential), Co-op City and Starrett City (large
+      housing complexes that opened in the early 1970s). These show as an amber color on the
+      delta map rather than a percent-change red, because a percent calculation against a
+      near-zero baseline is meaningless even when the underlying story is real. Criterion:
+      fewer than 50 children in the "from" year, at least 300 in the "to" year.</p>
+    <p><b>Masking low-count tracts.</b> Tracts with fewer than 50 children in both the "from"
+      and "to" year (that aren't captured by the "built from nothing" rule above) are drawn
+      in neutral gray rather than an extreme color. Without this mask the map is dominated by
+      parks, cemeteries, and institutional sites (Rikers Island, Prospect Park, Green-Wood
+      Cemetery, Brooklyn Navy Yard) where the AREALM clip didn't fully remove the polygon
+      and the residual sliver would otherwise show "−100%". Totals and ranked lists are
+      unaffected; only the map color is masked.</p>
     <p><b>Caveats.</b> (1) The area-weighted crosswalk assumes uniform population density within
       each historical tract. Where a 1970 tract was split along a density boundary (e.g., one half
       a housing project, the other half a park), the split gets an even allocation rather than a
@@ -432,13 +438,15 @@ function popup(f) {
 // ---------- render ----------
 function render() {
   const { mode, from, to } = state;
-  // Threshold: mask tracts whose residential child count is too low at either
-  // endpoint to be a meaningful data point. Prevents crosswalk slivers,
-  // parks, cemeteries, and institutional tracts (Rikers, Navy Yard,
-  // Prospect Park, Battery Park City pre-landfill) from dominating the
-  // color scale with fake +10,000% or -100% values.
+  // Thresholds.
+  //   MIN_KIDS   = floor below which a tract is "too small to be a data point"
+  //   NEW_KIDS   = a tract that went from <MIN_KIDS to >=NEW_KIDS is "new residential"
+  //                (landfill like Battery Park City, industrial conversion like Tribeca,
+  //                 greenfield like Co-op City/Starrett City)
   const MIN_KIDS = 50;
-  const MASK = "#d8d2c0"; // neutral gray-beige
+  const NEW_KIDS = 300;
+  const MASK = "#d8d2c0";   // neutral gray-beige (uncountable / park artifacts)
+  const NEW_COLOR = "#c98622"; // saturated amber (built from nothing)
   // Map styles
   layerByGj.forEach((l, gj) => {
     let fill;
@@ -448,8 +456,10 @@ function render() {
     } else {
       const k0 = countAt(gj, from), k1 = countAt(gj, to);
       const d0 = densityAt(gj, from), d1 = densityAt(gj, to);
-      if (k0 < MIN_KIDS || k1 < MIN_KIDS) {
-        fill = MASK;
+      if (k0 < MIN_KIDS && k1 >= NEW_KIDS) {
+        fill = NEW_COLOR;                      // "new residential"
+      } else if (k0 < MIN_KIDS || k1 < MIN_KIDS) {
+        fill = MASK;                           // unusable (park, cemetery, sliver)
       } else {
         const pct = d0 > 0 ? ((d1 - d0) / d0) * 100 : null;
         fill = colorDelta(pct);
@@ -591,6 +601,7 @@ function renderLegend() {
     DELTA_STOPS.forEach((s, i) => {
       html += `<span class="leg"><span class="sw" style="background:${s.c}"></span>${labels[i]}</span>`;
     });
+    html += `<span class="leg"><span class="sw" style="background:#c98622"></span>new residential (landfill / industrial conversion)</span>`;
     html += `<span class="leg"><span class="sw" style="background:#d8d2c0"></span>too few children</span>`;
     el.innerHTML = html;
   }
