@@ -87,6 +87,36 @@ def load_acs():
     return out
 
 
+def load_total_decennial():
+    """Returns: {geoid : {year: total_pop}} for 2000/2010/2020."""
+    out = {}
+    for y in [2000, 2010, 2020]:
+        path = DATA / f"total_{y}.json"
+        if not path.exists():
+            continue
+        rows = json.loads(path.read_text())
+        for r in rows:
+            if r["total"] is None:
+                continue
+            out.setdefault(r["geoid"], {})[y] = int(r["total"])
+    return out
+
+
+def load_total_acs():
+    """Returns: {geoid : {endyear: total_pop}} for 2011-2023."""
+    out = {}
+    for ey in range(2011, 2024):
+        path = DATA / f"acs5_total_{ey}.json"
+        if not path.exists():
+            continue
+        rows = json.loads(path.read_text())
+        for r in rows:
+            if r["total"] is None:
+                continue
+            out.setdefault(r["geoid"], {})[ey] = int(r["total"])
+    return out
+
+
 def load_geom():
     frames = []
     for state_zip in ["tracts_2010_36.zip", "tracts_2010_34.zip"]:
@@ -269,6 +299,62 @@ def main():
     for d in [1970, 1980, 1990, 2000, 2010, 2015, 2020, 2023]:
         if d in summary_total:
             print(f"  {d}: {summary_total[d]:,}")
+
+    # ---- Totals (all ages) timeseries, 2000-2023 ---------------------
+    # Denominator for the "% under 18" measure view. Joins by GEOID onto the
+    # same 2010-tract base, interpolates sparse decennial anchors across the
+    # ACS years, and writes docs/totals_timeseries.json in the same shape as
+    # counts_timeseries.json but spanning 2000-2023 only (pre-2000 totals
+    # aren't available without a second NHGIS crosswalk pass).
+    print("\nbuilding totals timeseries (2000-2023)...")
+    dec_tot = load_total_decennial()
+    acs_tot = load_total_acs()
+    print(f"  {len(dec_tot)} tracts with decennial totals, {len(acs_tot)} with ACS totals")
+
+    T_MIN, T_MAX = 2000, 2023
+    totals_ts = {}
+    for _, row in geom.iterrows():
+        geoid = row["geoid"]
+        gj = row["gisjoin"]
+        if gj not in tracts_series:
+            continue  # mirror the under-18 base: only tracts that made the cut
+        anchors = {}
+        if geoid in dec_tot:
+            anchors.update(dec_tot[geoid])
+        if geoid in acs_tot:
+            for ey, v in acs_tot[geoid].items():
+                anchors[ey] = float(v)
+        if not anchors:
+            continue
+        years_sorted = sorted(anchors.keys())
+        series = []
+        for y in range(T_MIN, T_MAX + 1):
+            if y in anchors:
+                series.append(anchors[y]); continue
+            lo = [a for a in years_sorted if a < y]
+            hi = [a for a in years_sorted if a > y]
+            if lo and hi:
+                y0, y1 = lo[-1], hi[0]
+                v0, v1 = anchors[y0], anchors[y1]
+                t = (y - y0) / (y1 - y0)
+                series.append(v0 + (v1 - v0) * t)
+            elif lo:
+                series.append(anchors[lo[-1]])
+            else:
+                series.append(anchors[hi[0]])
+        totals_ts[gj] = [round(v, 1) for v in series]
+
+    (WEB / "totals_timeseries.json").write_text(json.dumps({
+        "years": list(range(T_MIN, T_MAX + 1)),
+        "tracts": totals_ts,
+    }, separators=(",", ":")))
+    print(f"  wrote totals_timeseries.json ({len(totals_ts)} tracts)")
+    # Region-wide share check at a few anchor years.
+    for y in [2000, 2010, 2020, 2023]:
+        tot = sum(totals_ts[gj][y - T_MIN] for gj in totals_ts)
+        kid = sum(tracts_series[gj][y - YEAR_MIN] for gj in totals_ts)
+        if tot > 0:
+            print(f"  {y}: total {int(tot):,}, under18 {int(kid):,} ({100*kid/tot:.1f}%)")
 
     print("done.")
 

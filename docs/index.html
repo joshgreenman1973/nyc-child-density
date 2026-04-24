@@ -214,13 +214,14 @@
   <div class="mast-inner">
     <div class="kicker">A children's geography of New York</div>
     <h1><span class="nobr">Where the <em>children</em> went,</span><br>1970 to 2023</h1>
-    <p class="dek">Between 1970 and 2023 the five boroughs lost <b id="dek-nyc">490,000</b> children under 18
-      (<span id="dek-nyc-pct">−22%</span>); the bordering inner-ring counties in New York and New
-      Jersey lost another <b id="dek-sub">443,000</b> (<span id="dek-sub-pct">−27%</span>). Nationally
-      the under-18 population was roughly flat over those 53 years — about <b>69.7 million</b> in 1970,
-      <b>73.1 million</b> in 2023 (+5%). The NYC region shed kids while the country as a whole held
-      steady, and within the region the losses are anything but even: a handful of neighborhoods more
-      than doubled. Pan the map to see where, and compare any two years below.</p>
+    <p class="dek">Between 1970 and 2023 the five boroughs had <b id="dek-nyc">490,000</b> fewer
+      children under 18 (<span id="dek-nyc-pct">−22%</span>); the bordering inner-ring counties in
+      New York and New Jersey had <b id="dek-sub">443,000</b> fewer (<span id="dek-sub-pct">−27%</span>).
+      A few points of context: 1970 was the national baby-boom peak, and the U.S. under-18 count is
+      up only <b>5%</b> since (69.7M → 73.1M); the region's <em>total</em> population grew by about
+      <b>1.1 million</b> (+9%) over the same span; and the region's under-18 count has been roughly
+      flat since 1990 (<span id="dek-since1990">+8%</span>). The map below shows where the change
+      landed by neighborhood — losses are uneven, and a handful of neighborhoods more than doubled.</p>
   </div>
 </div>
 
@@ -933,6 +934,13 @@ Promise.all([
   document.getElementById("dek-sub").textContent = round1k(subLost).toLocaleString();
   document.getElementById("dek-nyc-pct").textContent = "\u2212" + nycPct + "%";
   document.getElementById("dek-sub-pct").textContent = "\u2212" + subPct + "%";
+  // Regional under-18 delta since 1990 (a more "normal" baseline than the boom peak).
+  const t1990 = SUMMARY.total[1990], t2023 = SUMMARY.total[2023];
+  if (t1990 && t2023) {
+    const pct90 = Math.round(((t2023 - t1990) / t1990) * 100);
+    const sign = pct90 >= 0 ? "+" : "\u2212";
+    document.getElementById("dek-since1990").textContent = sign + Math.abs(pct90) + "%";
+  }
 });
 </script>
 </body>
