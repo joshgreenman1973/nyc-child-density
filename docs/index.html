@@ -226,6 +226,16 @@
       <span style="flex:1"></span>
       <button class="chip" id="mode-snapshot">Single-year snapshot</button>
     </div>
+    <div class="bar-row">
+      <span class="bar-label">Age group</span>
+      <button class="chip age-chip on" data-band="u18">All <span style="color:var(--muted);font-weight:400">(under 18)</span></button>
+      <button class="chip age-chip" data-band="u5">Under 5</button>
+      <button class="chip age-chip" data-band="5_9">5&ndash;9</button>
+      <button class="chip age-chip" data-band="10_14">10&ndash;14</button>
+      <button class="chip age-chip" data-band="15_17">15&ndash;17</button>
+      <span style="flex:1"></span>
+      <span id="age-note" style="font-size:11px;color:var(--muted);"></span>
+    </div>
     <div class="bar-row" id="custom-row">
       <span class="bar-label">Custom</span>
       <span style="font-size:12px; color: var(--muted);">from</span>
@@ -274,6 +284,14 @@
       Community Survey 5-year estimates (B01001, sex by age) for endyears 2011 through 2023. Each
       year between 2011 and 2023 is a measured ACS estimate, not an interpolation. Pre-2011 years
       between decennial anchors are linearly interpolated.</p>
+    <p><b>Age-group filter.</b> The "Age group" chip row lets you restrict the map, totals, and
+      ranked lists to one of four bands: under 5, 5&ndash;9, 10&ndash;14, or 15&ndash;17. Age-band
+      counts come from decennial table P012 (2000 and 2010 SF1), P12 (2020 DHC), and ACS table
+      B01001 (2011&ndash;2023) — the under-18 totals used everywhere else are sums of the same
+      underlying variables. Because NHGIS time-series table D08 only splits persons into
+      "under 18" and "18+", the age-band view is only available from 2000 forward; pre-2000
+      years and the 2001&ndash;2009 gap between decennials are simply not in the dataset.
+      Age-band numbers are never interpolated — every reported year is a direct measurement.</p>
     <p><b>Geography.</b> The study area is the five boroughs of New York City plus every county
       sharing a land or water border with NYC: Westchester and Nassau (NY); Bergen, Hudson, Union,
       and Middlesex (NJ). Everything is rendered on 2010 census tract boundaries. Tract polygons
@@ -348,6 +366,38 @@
 // ---------- data ----------
 const YEAR_MIN = 1970, YEAR_MAX = 2023;
 let BASE = null, TS = null, COUNTS = null, SUMMARY = null, NBHD = {};
+let AGEBANDS = null;             // loaded from age_bands.json
+let AREA = {};                   // gisjoin -> land_sqmi (precomputed)
+let state = { mode: "delta", from: 1970, to: 2023, band: "u18" };
+const BAND_YEARS_SET = new Set();   // years available for non-u18 bands
+const BAND_LABEL = {
+  u18: "under 18", u5: "under 5", "5_9": "5–9", "10_14": "10–14", "15_17": "15–17",
+};
+
+// ---------- data accessors (band-aware) ----------
+function countBand(gj, year, band) {
+  if (band === "u18") return COUNTS.tracts[gj] ? COUNTS.tracts[gj][year - YEAR_MIN] : 0;
+  const rec = AGEBANDS && AGEBANDS.tracts[gj];
+  if (!rec || !rec[band]) return 0;
+  const v = rec[band][year];
+  return v == null ? 0 : v;
+}
+function densityBand(gj, year, band) {
+  if (band === "u18") return TS.tracts[gj] ? TS.tracts[gj][year - YEAR_MIN] : 0;
+  const c = countBand(gj, year, band);
+  const a = AREA[gj] || 0;
+  return a > 0 ? c / a : 0;
+}
+function bandTotalAt(year, band) {
+  if (band === "u18") return SUMMARY.total[year] || 0;
+  let t = 0;
+  if (!AGEBANDS) return 0;
+  for (const gj in AGEBANDS.tracts) {
+    const rec = AGEBANDS.tracts[gj][band];
+    if (rec && rec[year] != null) t += rec[year];
+  }
+  return t;
+}
 
 // Absolute density palette (sequential, warm)
 const D_BREAKS = [0, 2000, 5000, 10000, 20000, 35000, 60000];
@@ -379,12 +429,18 @@ function colorDelta(pct) {
   return DELTA_STOPS[DELTA_STOPS.length - 1].c;
 }
 
-function densityAt(gj, y) { return TS.tracts[gj] ? TS.tracts[gj][y - YEAR_MIN] : 0; }
-function countAt(gj, y)   { return COUNTS.tracts[gj] ? COUNTS.tracts[gj][y - YEAR_MIN] : 0; }
-function isReal(y) { return SUMMARY.real_anchor_years.includes(y); }
+function densityAt(gj, y) { return densityBand(gj, y, state.band); }
+function countAt(gj, y)   { return countBand(gj, y, state.band); }
+function isReal(y) {
+  if (state.band === "u18") return SUMMARY.real_anchor_years.includes(y);
+  // Age bands are never interpolated — every year present is directly measured.
+  return BAND_YEARS_SET.has(y);
+}
+function bandHasYear(y) {
+  if (state.band === "u18") return true;
+  return BAND_YEARS_SET.has(y);
+}
 
-// ---------- state ----------
-let state = { mode: "delta", from: 1970, to: 2023 }; // mode = "delta" or "snapshot"
 
 // ---------- map ----------
 const map = L.map("map", { zoomControl: true, preferCanvas: true })
@@ -413,7 +469,9 @@ function buildLayer() {
 function popup(f) {
   const gj = f.properties.gisjoin;
   const area = f.properties.land_sqmi;
-  const head = `<b>${nbhdLabel(f)}</b><div style="color:var(--muted);font-size:11px;margin-bottom:4px;">Tract ${tractNumber(f)}</div>`;
+  const bl = state.band === "u18" ? "" :
+    `<div style="color:var(--muted);font-size:11px;margin-bottom:4px;">Age group: ${BAND_LABEL[state.band]}</div>`;
+  const head = `<b>${nbhdLabel(f)}</b><div style="color:var(--muted);font-size:11px;margin-bottom:4px;">Tract ${tractNumber(f)}</div>${bl}`;
   if (state.mode === "snapshot") {
     const y = state.to;
     const d = densityAt(gj, y), k = countAt(gj, y);
@@ -471,12 +529,13 @@ function render() {
   // Title
   const title = document.getElementById("map-title");
   const sub = document.getElementById("map-sub");
+  const bl = BAND_LABEL[state.band];
   if (mode === "snapshot") {
     title.innerHTML = `Children per square mile, <span class="from">${to}</span>`;
-    sub.textContent = `Absolute density of children under 18, by 2010 census tract. ${isReal(to) ? "Measured" : "Interpolated"} year.`;
+    sub.textContent = `Absolute density of children (${bl}), by 2010 census tract. ${isReal(to) ? "Measured" : "Interpolated"} year.`;
   } else {
     title.innerHTML = `<span class="from">${from}</span><span class="arrow">→</span><span>${to}</span>`;
-    sub.textContent = `Change in children per square mile, by 2010 census tract. Red = gain, blue = loss, white = within ±10%.`;
+    sub.textContent = `Change in density of children (${bl}), by 2010 census tract. Red = gain, blue = loss, amber = built from near-zero, white = within ±10%.`;
   }
 
   renderTotals();
@@ -485,23 +544,28 @@ function render() {
 }
 
 function renderTotals() {
-  const { mode, from, to } = state;
+  const { mode, from, to, band } = state;
   const wrap = document.getElementById("totals");
+  const label = BAND_LABEL[band];
+  // Update the card header to reflect the band.
+  document.querySelector(".rail .card .card-hed").textContent =
+    band === "u18" ? "Total children under 18" : `Total children (${label})`;
   if (mode === "snapshot") {
+    const t = bandTotalAt(to, band);
     wrap.innerHTML = `
-      <div class="big-num">${SUMMARY.total[to].toLocaleString()}</div>
+      <div class="big-num">${Math.round(t).toLocaleString()}</div>
       <div class="sub-num">${to} · ${isReal(to) ? "measured" : "interpolated"}</div>`;
     return;
   }
-  const t0 = SUMMARY.total[from], t1 = SUMMARY.total[to];
-  const delta = t1 - t0;
+  const t0 = bandTotalAt(from, band), t1 = bandTotalAt(to, band);
+  const delta = Math.round(t1 - t0);
   const pct = t0 > 0 ? (delta / t0) * 100 : 0;
   const cls = delta >= 0 ? "delta-pos" : "delta-neg";
   wrap.innerHTML = `
-    <div class="big-num">${t1.toLocaleString()}
+    <div class="big-num">${Math.round(t1).toLocaleString()}
       <span class="delta ${cls}">${delta >= 0 ? "+" : ""}${delta.toLocaleString()}</span>
     </div>
-    <div class="sub-num">${to} total, ${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs ${from} (${t0.toLocaleString()})</div>`;
+    <div class="sub-num">${to} total, ${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs ${from} (${Math.round(t0).toLocaleString()})</div>`;
 }
 
 function renderRanked() {
@@ -630,15 +694,75 @@ document.querySelectorAll(".chip[data-preset]").forEach(btn => {
   btn.addEventListener("click", () => {
     const [f, t] = btn.dataset.preset.split(",").map(Number);
     state.mode = "delta";
-    state.from = f; state.to = t;
-    document.getElementById("from-year").value = f;
-    document.getElementById("to-year").value = t;
+    state.from = clampToBand(f);
+    state.to = clampToBand(t);
+    document.getElementById("from-year").value = state.from;
+    document.getElementById("to-year").value = state.to;
     document.getElementById("mode-snapshot").classList.remove("on");
     clearPresetHighlight();
     btn.classList.add("on");
     render();
   });
 });
+
+function clampToBand(y) {
+  if (state.band === "u18") return y;
+  const valid = [...BAND_YEARS_SET].sort((a,b)=>a-b);
+  if (valid.includes(y)) return y;
+  // snap to the closest available band year
+  let best = valid[0], bd = Math.abs(valid[0] - y);
+  for (const v of valid) {
+    const d = Math.abs(v - y);
+    if (d < bd) { bd = d; best = v; }
+  }
+  return best;
+}
+
+document.querySelectorAll(".chip.age-chip").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const band = btn.dataset.band;
+    if (band === state.band) return;
+    state.band = band;
+    document.querySelectorAll(".chip.age-chip").forEach(c => c.classList.toggle("on", c === btn));
+    // Snap selected years to valid band years and update the dropdowns/presets.
+    state.from = clampToBand(state.from);
+    state.to   = clampToBand(state.to);
+    document.getElementById("from-year").value = state.from;
+    document.getElementById("to-year").value   = state.to;
+    updateYearOptions();
+    updatePresetAvailability();
+    // Band note
+    const note = document.getElementById("age-note");
+    note.textContent = band === "u18"
+      ? ""
+      : "Age-band data: 2000, 2010, and 2011–2023 only (no 2001–2009, no pre-2000).";
+    render();
+  });
+});
+
+function updateYearOptions() {
+  const fy = document.getElementById("from-year");
+  const ty = document.getElementById("to-year");
+  const avail = state.band === "u18" ? ANCHOR_YEARS : [...BAND_YEARS_SET].sort((a,b)=>a-b);
+  for (const sel of [fy, ty]) {
+    const cur = sel.value;
+    sel.innerHTML = "";
+    for (const y of avail) {
+      sel.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
+    }
+    sel.value = String(clampToBand(+cur));
+  }
+}
+
+function updatePresetAvailability() {
+  document.querySelectorAll(".chip[data-preset]").forEach(btn => {
+    const [f, t] = btn.dataset.preset.split(",").map(Number);
+    const ok = (state.band === "u18") || (BAND_YEARS_SET.has(f) && BAND_YEARS_SET.has(t));
+    btn.disabled = !ok;
+    btn.style.opacity = ok ? "1" : "0.35";
+    btn.style.cursor = ok ? "pointer" : "not-allowed";
+  });
+}
 
 const snapBtn = document.getElementById("mode-snapshot");
 snapBtn.addEventListener("click", () => {
@@ -671,8 +795,12 @@ Promise.all([
   fetch("counts_timeseries.json").then(r => r.json()),
   fetch("summary.json").then(r => r.json()),
   fetch("neighborhoods.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
-]).then(([base, ts, counts, summary, nbhd]) => {
+  fetch("age_bands.json").then(r => r.ok ? r.json() : null).catch(() => null),
+]).then(([base, ts, counts, summary, nbhd, bands]) => {
   BASE = base; TS = ts; COUNTS = counts; SUMMARY = summary; NBHD = nbhd || {};
+  AGEBANDS = bands;
+  if (AGEBANDS) AGEBANDS.years.forEach(y => BAND_YEARS_SET.add(y));
+  BASE.features.forEach(f => AREA[f.properties.gisjoin] = f.properties.land_sqmi);
   populateYears();
   buildLayer();
   render();
