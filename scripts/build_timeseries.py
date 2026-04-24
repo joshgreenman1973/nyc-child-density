@@ -104,12 +104,21 @@ def load_geom():
         frames.append(g[["gisjoin", "geoid", "geometry"]])
     out = gpd.GeoDataFrame(pd.concat(frames, ignore_index=True), crs=frames[0].crs)
 
-    water_path = DATA / "water_mask.geojson"
+    # Prefer the combined clip mask (water + parks + cemeteries + airports + military).
+    water_path = DATA / "clip_mask.geojson"
+    if not water_path.exists():
+        water_path = DATA / "water_mask.geojson"
     if water_path.exists():
-        print("  clipping tract geometries against water mask...")
+        print(f"  clipping tract geometries against {water_path.name}...")
         water = gpd.read_file(water_path).to_crs(out.crs)
+        water["geometry"] = water.geometry.buffer(0)
+        water = water[~water.geometry.is_empty & water.geometry.is_valid]
         water_union = water.geometry.union_all() if hasattr(water.geometry, "union_all") \
             else water.geometry.unary_union
+        # buffer(0) on the union too — GEOS difference can't handle invalid input
+        from shapely.validation import make_valid
+        water_union = make_valid(water_union)
+        out["geometry"] = out.geometry.buffer(0)
         out["geometry"] = out.geometry.difference(water_union)
 
     proj = out.to_crs(epsg=2263)

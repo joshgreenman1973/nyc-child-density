@@ -173,6 +173,16 @@
   .leaflet-popup-tip { background: var(--paper); border: 1px solid var(--rule); }
   .leaflet-popup-content { font-size: 12px; line-height: 1.5; margin: 12px 14px; }
   .leaflet-popup-content b { font-family: "Fraunces", serif; font-weight: 500; }
+  /* Hover tooltip */
+  .leaflet-tooltip.tract-tip {
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    font-size: 12px; line-height: 1.5; padding: 10px 12px;
+    font-family: inherit; white-space: normal; max-width: 260px;
+  }
+  .leaflet-tooltip.tract-tip::before { display: none; }
+  .leaflet-tooltip.tract-tip b { font-family: "Fraunces", serif; font-weight: 500; font-size: 13px; }
 
   /* Scrub slider (compact, de-emphasized) */
   .scrub {
@@ -266,8 +276,11 @@
     <p><b>Geography.</b> The study area is the five boroughs of New York City plus every county
       sharing a land or water border with NYC: Westchester and Nassau (NY); Bergen, Hudson, Union,
       and Middlesex (NJ). Everything is rendered on 2010 census tract boundaries. Tract polygons
-      are clipped against TIGER/Line AREAWATER layers so rivers and the harbor are not painted by
-      the choropleth.</p>
+      are clipped against TIGER/Line AREAWATER (rivers, harbor) and AREALM (parks, cemeteries,
+      airports, and military installations) so non-residential land is not painted by the
+      choropleth. Neighborhood labels in the ranked lists come from NYC Planning's 2020
+      Neighborhood Tabulation Areas (inside the five boroughs) and TIGER PLACE 2020
+      (incorporated and census-designated places elsewhere).</p>
     <p><b>Normalization across decades.</b> Tract boundaries are redrawn every decennial census,
       so 1970, 1980, 1990, and 2000 tracts are not the same shapes as 2010 tracts. To compare
       apples to apples, each historical decade's counts are redistributed to 2010 tracts using
@@ -283,8 +296,15 @@
     <p><b>Density.</b> Children per square mile = count ÷ land area in sq mi. Land area is
       computed from 2010 TIGER cartographic boundaries projected to EPSG:2263 (NY State Plane,
       Long Island, survey feet). Tracts under 0.005 sq mi (airports, parks, water) are excluded.</p>
-    <p><b>Change calculation.</b> Percent change in density between the "from" and "to" year for
-      each tract. Tracts with zero baseline density show no color.</p>
+    <p><b>Change calculation.</b> The map colors each tract by percent change in density between
+      the "from" and "to" year. The ranked "biggest gainers" and "biggest losers" lists, however,
+      use <i>absolute</i> change in child count (kids added or lost), because percent change is
+      unstable on small bases — a tract that went from 5 children to 500 is a +9,900% swing but
+      not necessarily a bigger story than a Williamsburg tract that went from 900 to 1,800.
+      Ranked lists also require both endpoints to have at least 100 children, to exclude
+      institutional, industrial, or otherwise non-residential tracts (Rikers Island, rail yards,
+      cemeteries) where the count is near zero by construction. A single neighborhood is
+      represented by its single biggest-swing tract in the list.</p>
     <p><b>Caveats.</b> (1) The area-weighted crosswalk assumes uniform population density within
       each historical tract. Where a 1970 tract was split along a density boundary (e.g., one half
       a housing project, the other half a park), the split gets an even allocation rather than a
@@ -307,7 +327,7 @@
 <script>
 // ---------- data ----------
 const YEAR_MIN = 1970, YEAR_MAX = 2023;
-let BASE = null, TS = null, COUNTS = null, SUMMARY = null;
+let BASE = null, TS = null, COUNTS = null, SUMMARY = null, NBHD = {};
 
 // Absolute density palette (sequential, warm)
 const D_BREAKS = [0, 2000, 5000, 10000, 20000, 35000, 60000];
@@ -363,7 +383,7 @@ function buildLayer() {
     style: () => ({ color: "#fff", weight: 0.25, fillOpacity: 0.9, fillColor: "#eee7d4" }),
     onEachFeature: (f, l) => {
       layerByGj.set(f.properties.gisjoin, l);
-      l.on("click", () => l.bindPopup(popup(f)).openPopup());
+      l.bindTooltip(() => popup(f), { sticky: true, direction: "top", opacity: 1, className: "tract-tip" });
       l.on("mouseover", () => l.setStyle({ weight: 1.5, color: "#1a1915" }));
       l.on("mouseout", () => l.setStyle({ weight: 0.25, color: "#fff" }));
     },
@@ -373,10 +393,11 @@ function buildLayer() {
 function popup(f) {
   const gj = f.properties.gisjoin;
   const area = f.properties.land_sqmi;
+  const head = `<b>${nbhdLabel(f)}</b><div style="color:var(--muted);font-size:11px;margin-bottom:4px;">Tract ${tractNumber(f)}</div>`;
   if (state.mode === "snapshot") {
     const y = state.to;
     const d = densityAt(gj, y), k = countAt(gj, y);
-    return `<b>Tract ${f.properties.geoid}</b><br>
+    return `${head}
       Year: ${y} <span class="year-tag${isReal(y) ? "" : " interp"}">${isReal(y) ? "measured" : "interpolated"}</span><br>
       Density: <b>${Math.round(d).toLocaleString()}</b> kids / sq mi<br>
       Children: ${Math.round(k).toLocaleString()}<br>
@@ -386,12 +407,12 @@ function popup(f) {
   const k0 = countAt(gj, state.from), k1 = countAt(gj, state.to);
   const pct = d0 > 0 ? ((d1 - d0) / d0) * 100 : null;
   const signed = (n) => (n > 0 ? "+" : "") + n.toLocaleString();
-  return `<b>Tract ${f.properties.geoid}</b><br>
+  return `${head}
     <span style="color:var(--muted)">${state.from}:</span> ${Math.round(k0).toLocaleString()} kids @ ${Math.round(d0).toLocaleString()}/sq mi<br>
     <span style="color:var(--muted)">${state.to}:</span> ${Math.round(k1).toLocaleString()} kids @ ${Math.round(d1).toLocaleString()}/sq mi<br>
     <b style="font-size:13px;color:${pct == null ? "var(--muted)" : (pct > 0 ? "var(--gain)" : "var(--loss)")}">
-      ${pct == null ? "-" : signed(Math.round(pct)) + "%"} density
-    </b>, ${signed(Math.round(k1 - k0))} kids`;
+      ${signed(Math.round(k1 - k0))} kids
+    </b> (${pct == null ? "-" : signed(Math.round(pct)) + "%"} density)`;
 }
 
 // ---------- render ----------
@@ -480,33 +501,55 @@ function renderRanked() {
   gHed.textContent = ` (${from}→${to})`;
   lHed.textContent = ` (${from}→${to})`;
   const ranked = [];
+  const seenNbhd = new Map(); // dedupe: keep the single biggest-swing tract per neighborhood
   BASE.features.forEach(f => {
     const gj = f.properties.gisjoin;
     const d0 = densityAt(gj, from), d1 = densityAt(gj, to);
     const k0 = countAt(gj, from), k1 = countAt(gj, to);
-    if (d0 < 500 || k0 < 50) return; // require meaningful baseline
-    const pct = ((d1 - d0) / d0) * 100;
-    ranked.push({ f, pct, k0, k1 });
+    // Require BOTH endpoints to have a meaningful residential baseline.
+    // This removes industrial/institutional/landfill tracts where fractional
+    // baselines produce meaningless percent swings.
+    if (k0 < 100 && k1 < 100) return;
+    const delta = k1 - k0;
+    ranked.push({ f, delta, k0, k1, gj });
   });
-  const gain = [...ranked].sort((a, b) => b.pct - a.pct).slice(0, 6);
-  const loss = [...ranked].sort((a, b) => a.pct - b.pct).slice(0, 6);
-  gainers.innerHTML = gain.map(r =>
-    `<li><span class="geo">${label(r.f)}</span><span class="val delta-pos">+${Math.round(r.pct)}%</span></li>`
+  // Rank by absolute change in child count (kids added/lost), not percent.
+  const gain = [...ranked].sort((a, b) => b.delta - a.delta);
+  const loss = [...ranked].sort((a, b) => a.delta - b.delta);
+  const pickTop = (arr) => {
+    const seen = new Set(); const out = [];
+    for (const r of arr) {
+      const name = nbhdLabel(r.f);
+      if (seen.has(name)) continue;
+      seen.add(name); out.push(r);
+      if (out.length === 6) break;
+    }
+    return out;
+  };
+  const gainTop = pickTop(gain), lossTop = pickTop(loss);
+  const signed = (n) => (n > 0 ? "+" : "") + n.toLocaleString();
+  gainers.innerHTML = gainTop.map(r =>
+    `<li><span class="geo">${nbhdLabel(r.f)}</span><span class="val delta-pos">${signed(Math.round(r.delta))}</span></li>`
   ).join("");
-  losers.innerHTML = loss.map(r =>
-    `<li><span class="geo">${label(r.f)}</span><span class="val delta-neg">${Math.round(r.pct)}%</span></li>`
+  losers.innerHTML = lossTop.map(r =>
+    `<li><span class="geo">${nbhdLabel(r.f)}</span><span class="val delta-neg">${Math.round(r.delta).toLocaleString()}</span></li>`
   ).join("");
 }
 
-function label(f) {
-  // short label: last 6 digits of geoid = tract number, plus county abbrev
-  const geoid = f.properties.geoid;
-  const state = geoid.slice(0, 2), county = geoid.slice(2, 5);
-  const tract = geoid.slice(5);
-  const tractNum = (parseInt(tract) / 100).toFixed(2).replace(/\.00$/, "");
-  const cn = COUNTY_NAMES[state + county] || "";
-  return `${cn} · Tract ${tractNum}`;
+function tractNumber(f) {
+  const tract = f.properties.geoid.slice(5);
+  return (parseInt(tract) / 100).toFixed(2).replace(/\.00$/, "");
 }
+function countyName(f) {
+  const geoid = f.properties.geoid;
+  return COUNTY_NAMES[geoid.slice(0, 5)] || "";
+}
+function nbhdLabel(f) {
+  const nb = NBHD[f.properties.gisjoin];
+  if (nb) return nb;
+  return `${countyName(f)} · Tract ${tractNumber(f)}`;
+}
+function label(f) { return nbhdLabel(f); }
 const COUNTY_NAMES = {
   "36005":"Bronx","36047":"Brooklyn","36061":"Manhattan","36081":"Queens","36085":"Staten Island",
   "36119":"Westchester","36059":"Nassau",
@@ -596,8 +639,9 @@ Promise.all([
   fetch("density_timeseries.json").then(r => r.json()),
   fetch("counts_timeseries.json").then(r => r.json()),
   fetch("summary.json").then(r => r.json()),
-]).then(([base, ts, counts, summary]) => {
-  BASE = base; TS = ts; COUNTS = counts; SUMMARY = summary;
+  fetch("neighborhoods.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
+]).then(([base, ts, counts, summary, nbhd]) => {
+  BASE = base; TS = ts; COUNTS = counts; SUMMARY = summary; NBHD = nbhd || {};
   populateYears();
   buildLayer();
   render();
