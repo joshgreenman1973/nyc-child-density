@@ -240,6 +240,13 @@
     <!-- Controls shown ONLY in under-18 mode: full history, compare two years -->
     <div id="u18-controls">
       <div class="bar-row">
+        <span class="bar-label">Measure</span>
+        <button class="chip measure-chip on" data-measure="density">Density <span style="color:var(--muted);font-weight:400">(kids per sq mi)</span></button>
+        <button class="chip measure-chip" data-measure="share">Share under 18 <span style="color:var(--muted);font-weight:400">(% of total pop)</span></button>
+        <span style="flex:1"></span>
+        <span style="font-size:11px;color:var(--muted);" id="measure-note"></span>
+      </div>
+      <div class="bar-row">
         <span class="bar-label">Compare</span>
         <button class="chip on" data-preset="1970,2023">1970 vs 2023</button>
         <button class="chip" data-preset="1970,1990">1970 vs 1990</button>
@@ -352,6 +359,16 @@
     <p><b>Density.</b> Children per square mile = count ÷ land area in sq mi. Land area is
       computed from 2010 TIGER cartographic boundaries projected to EPSG:2263 (NY State Plane,
       Long Island, survey feet). Tracts under 0.005 sq mi (airports, parks, water) are excluded.</p>
+    <p><b>Share under 18.</b> The "Share under 18" measure divides the count of children under 18
+      by the tract's total population and reports the result as a percent. This controls for
+      population density — a tract with a lot of kids and a lot of adults has the same density score
+      as a tract with a lot of kids and few adults, but a different share score. Denominators come
+      from decennial table P012/P12 (2000, 2010, 2020) and ACS table B01001 (endyears 2011–2023),
+      interpolated linearly across the 2001–2009 gap. Because pre-2000 totals aren't available in
+      the same pipeline, the share view is restricted to the 2000–2023 window. In snapshot mode the
+      map colors a tract by its share-under-18; in delta mode the map colors by <i>percentage-point
+      change</i> (e.g. a tract that went from 25% to 20% shows as −5 pp, not −20%). Tracts with
+      fewer than 50 children or fewer than 200 people total are masked.</p>
     <p><b>Change calculation.</b> The map colors each tract by percent change in density between
       the "from" and "to" year. The ranked "biggest gainers" and "biggest losers" lists, however,
       use <i>absolute</i> change in child count (kids added or lost) because percent change is
@@ -408,11 +425,13 @@
 <script>
 // ---------- data ----------
 const YEAR_MIN = 1970, YEAR_MAX = 2023;
+const SHARE_YEAR_MIN = 2000;      // totals_timeseries.json covers 2000-2023 only
 let BASE = null, TS = null, COUNTS = null, SUMMARY = null, NBHD = {};
 let AGEBANDS = null;             // loaded from age_bands.json (keyed by geoid)
+let TOTALS = null;               // loaded from totals_timeseries.json (keyed by gj, 2000-2023)
 let AREA = {};                   // gisjoin -> land_sqmi (precomputed)
 let GEOID = {};                  // gisjoin -> geoid (precomputed)
-let state = { mode: "delta", from: 1970, to: 2023, band: "u18" };
+let state = { mode: "delta", from: 1970, to: 2023, band: "u18", measure: "density" };
 const BAND_YEARS_SET = new Set();   // years available for non-u18 bands
 const BAND_LABEL = {
   u18: "under 18", u5: "under 5", "5_9": "5–9", "10_14": "10–14", "15_17": "15–17",
@@ -448,7 +467,13 @@ function bandTotalAt(year, band) {
 const D_BREAKS = [0, 2000, 5000, 10000, 20000, 35000, 60000];
 const D_COLORS = ["#efe8d4", "#f6d79a", "#efa86a", "#d97742", "#b84c27", "#7d1c0a"];
 
-// Delta palette (diverging, muted)
+// Share-under-18 palette. Regional mean sits around 20-21%. Diverging around
+// the regional mean makes "family neighborhood" vs "adult neighborhood" legible.
+// Low (fewer kids per capita) = muted teal; high = warm orange.
+const S_BREAKS = [0, 10, 15, 20, 25, 30, 40];  // percent cuts
+const S_COLORS = ["#2e7c86", "#6fa9ad", "#bcd0c9", "#ead9b9", "#e4a97a", "#c77237", "#8a3c14"];
+
+// Delta palette (diverging, muted) — percent-change for density, point-change for share
 const DELTA_STOPS = [
   { lt: -75, c: "#2a5a85" },
   { lt: -50, c: "#457ba8" },
@@ -460,6 +485,19 @@ const DELTA_STOPS = [
   { lt: 100, c: "#a8492b" },
   { lt:  1e9,c: "#6e1e0b" },
 ];
+// Share-delta stops in percentage points (not percent of percent — one
+// share-point is absolute: e.g. 25%→20% = −5 points).
+const SHARE_DELTA_STOPS = [
+  { lt: -10, c: "#2a5a85" },
+  { lt:  -5, c: "#457ba8" },
+  { lt:  -2, c: "#7ea8cc" },
+  { lt:  -0.5, c: "#c1d5e4" },
+  { lt:   0.5, c: "#f4efdf" },   // neutral band
+  { lt:   2, c: "#e9c2a8" },
+  { lt:   5, c: "#d48966" },
+  { lt:  10, c: "#a8492b" },
+  { lt: 1e9, c: "#6e1e0b" },
+];
 
 function colorDensity(d) {
   if (!d || d <= 0) return "#eee7d4";
@@ -468,14 +506,55 @@ function colorDensity(d) {
   }
   return D_COLORS[0];
 }
+function colorShare(pct) {
+  if (pct == null || !isFinite(pct)) return "#eee7d4";
+  for (let i = S_BREAKS.length - 1; i >= 0; i--) {
+    if (pct >= S_BREAKS[i]) return S_COLORS[Math.min(i, S_COLORS.length - 1)];
+  }
+  return S_COLORS[0];
+}
 function colorDelta(pct) {
   if (pct === null || !isFinite(pct)) return "#eee7d4";
   for (const s of DELTA_STOPS) if (pct < s.lt) return s.c;
   return DELTA_STOPS[DELTA_STOPS.length - 1].c;
 }
+function colorShareDelta(pts) {
+  if (pts === null || !isFinite(pts)) return "#eee7d4";
+  for (const s of SHARE_DELTA_STOPS) if (pts < s.lt) return s.c;
+  return SHARE_DELTA_STOPS[SHARE_DELTA_STOPS.length - 1].c;
+}
 
 function densityAt(gj, y) { return densityBand(gj, y, state.band); }
 function countAt(gj, y)   { return countBand(gj, y, state.band); }
+
+// Total-population accessor (2000-2023 only; returns null for out-of-range years).
+function totalAt(gj, y) {
+  if (!TOTALS || y < SHARE_YEAR_MIN || y > YEAR_MAX) return null;
+  const arr = TOTALS.tracts[gj];
+  return arr ? arr[y - SHARE_YEAR_MIN] : null;
+}
+// Share under 18 as a percentage (0-100) for a tract-year. null if no denom.
+function shareAt(gj, y) {
+  const tot = totalAt(gj, y);
+  if (!tot || tot <= 0) return null;
+  return 100 * countAt(gj, y) / tot;
+}
+// Regional aggregate share for a given year (weighted by raw counts).
+function regionShareAt(y) {
+  if (!TOTALS || y < SHARE_YEAR_MIN || y > YEAR_MAX) return null;
+  let kids = 0, people = 0;
+  for (const gj in TOTALS.tracts) {
+    const t = totalAt(gj, y);
+    if (!t || t <= 0) continue;
+    kids += countAt(gj, y); people += t;
+  }
+  return people > 0 ? 100 * kids / people : null;
+}
+// Unified "value at" — the metric currently being mapped, for a tract-year.
+// Used by map coloring, popup, and rankings.
+function metricAt(gj, y) {
+  return state.measure === "share" ? shareAt(gj, y) : densityAt(gj, y);
+}
 function isReal(y) {
   if (state.band === "u18") return SUMMARY.real_anchor_years.includes(y);
   // Age bands are never interpolated — every year present is directly measured.
@@ -517,19 +596,40 @@ function popup(f) {
   const bl = state.band === "u18" ? "" :
     `<div style="color:var(--muted);font-size:11px;margin-bottom:4px;">Age group: ${BAND_LABEL[state.band]}</div>`;
   const head = `<b>${nbhdLabel(f)}</b><div style="color:var(--muted);font-size:11px;margin-bottom:4px;">Tract ${tractNumber(f)}</div>${bl}`;
+  const isShare = state.measure === "share";
   if (state.mode === "snapshot") {
     const y = state.to;
     const d = densityAt(gj, y), k = countAt(gj, y);
+    const t = totalAt(gj, y), s = shareAt(gj, y);
+    const shareLine = isShare
+      ? `Share under 18: <b>${s == null ? "—" : s.toFixed(1) + "%"}</b><br>`
+      : "";
+    const totLine = isShare
+      ? `Total pop: ${t == null ? "—" : Math.round(t).toLocaleString()}<br>`
+      : "";
     return `${head}
       Year: ${y} <span class="year-tag${isReal(y) ? "" : " interp"}">${isReal(y) ? "measured" : "interpolated"}</span><br>
+      ${shareLine}
       Density: <b>${Math.round(d).toLocaleString()}</b> kids / sq mi<br>
       Children: ${Math.round(k).toLocaleString()}<br>
+      ${totLine}
       Land area: ${area.toFixed(2)} sq mi`;
   }
   const d0 = densityAt(gj, state.from), d1 = densityAt(gj, state.to);
   const k0 = countAt(gj, state.from), k1 = countAt(gj, state.to);
-  const pct = d0 > 0 ? ((d1 - d0) / d0) * 100 : null;
   const signed = (n) => (n > 0 ? "+" : "") + n.toLocaleString();
+  if (isShare) {
+    const s0 = shareAt(gj, state.from), s1 = shareAt(gj, state.to);
+    const pts = (s0 != null && s1 != null) ? (s1 - s0) : null;
+    const ptsStr = pts == null ? "—"
+      : (pts > 0 ? "+" : "") + pts.toFixed(1) + " pp";
+    const color = pts == null ? "var(--muted)" : (pts > 0 ? "var(--gain)" : "var(--loss)");
+    return `${head}
+      <span style="color:var(--muted)">${state.from}:</span> ${s0 == null ? "—" : s0.toFixed(1) + "%"} under 18 (${Math.round(k0).toLocaleString()} kids)<br>
+      <span style="color:var(--muted)">${state.to}:</span> ${s1 == null ? "—" : s1.toFixed(1) + "%"} under 18 (${Math.round(k1).toLocaleString()} kids)<br>
+      <b style="font-size:13px;color:${color}">${ptsStr}</b> change in share`;
+  }
+  const pct = d0 > 0 ? ((d1 - d0) / d0) * 100 : null;
   return `${head}
     <span style="color:var(--muted)">${state.from}:</span> ${Math.round(k0).toLocaleString()} kids @ ${Math.round(d0).toLocaleString()}/sq mi<br>
     <span style="color:var(--muted)">${state.to}:</span> ${Math.round(k1).toLocaleString()} kids @ ${Math.round(d1).toLocaleString()}/sq mi<br>
@@ -548,24 +648,44 @@ function render() {
   //                 greenfield like Co-op City/Starrett City)
   const MIN_KIDS = 50;
   const NEW_KIDS = 300;
+  const MIN_POP = 200;      // share denominator floor — tracts below are masked
   const MASK = "#d8d2c0";   // neutral gray-beige (uncountable / park artifacts)
   const NEW_COLOR = "#c98622"; // saturated amber (built from nothing)
+  const isShare = state.measure === "share";
   // Map styles
   layerByGj.forEach((l, gj) => {
     let fill;
     if (mode === "snapshot") {
       const k = countAt(gj, to);
-      fill = k < MIN_KIDS ? MASK : colorDensity(densityAt(gj, to));
+      if (k < MIN_KIDS) {
+        fill = MASK;
+      } else if (isShare) {
+        const t = totalAt(gj, to);
+        fill = (t == null || t < MIN_POP) ? MASK : colorShare(shareAt(gj, to));
+      } else {
+        fill = colorDensity(densityAt(gj, to));
+      }
     } else {
       const k0 = countAt(gj, from), k1 = countAt(gj, to);
-      const d0 = densityAt(gj, from), d1 = densityAt(gj, to);
-      if (k0 < MIN_KIDS && k1 >= NEW_KIDS) {
-        fill = NEW_COLOR;                      // "new residential"
-      } else if (k0 < MIN_KIDS || k1 < MIN_KIDS) {
-        fill = MASK;                           // unusable (park, cemetery, sliver)
+      if (isShare) {
+        const t0 = totalAt(gj, from), t1 = totalAt(gj, to);
+        if (t0 == null || t1 == null || t0 < MIN_POP || t1 < MIN_POP
+            || k0 < MIN_KIDS || k1 < MIN_KIDS) {
+          fill = MASK;
+        } else {
+          const pts = shareAt(gj, to) - shareAt(gj, from);
+          fill = colorShareDelta(pts);
+        }
       } else {
-        const pct = d0 > 0 ? ((d1 - d0) / d0) * 100 : null;
-        fill = colorDelta(pct);
+        const d0 = densityAt(gj, from), d1 = densityAt(gj, to);
+        if (k0 < MIN_KIDS && k1 >= NEW_KIDS) {
+          fill = NEW_COLOR;                      // "new residential"
+        } else if (k0 < MIN_KIDS || k1 < MIN_KIDS) {
+          fill = MASK;                           // unusable (park, cemetery, sliver)
+        } else {
+          const pct = d0 > 0 ? ((d1 - d0) / d0) * 100 : null;
+          fill = colorDelta(pct);
+        }
       }
     }
     l.setStyle({ fillColor: fill, color: "#fff", weight: 0.25, fillOpacity: 0.9 });
@@ -576,11 +696,20 @@ function render() {
   const sub = document.getElementById("map-sub");
   const bl = BAND_LABEL[state.band];
   if (mode === "snapshot") {
-    title.innerHTML = `Children per square mile, <span class="from">${to}</span>`;
-    sub.textContent = `Absolute density of children (${bl}), by 2010 census tract. ${isReal(to) ? "Measured" : "Interpolated"} year.`;
+    if (isShare) {
+      title.innerHTML = `Share of population under 18, <span class="from">${to}</span>`;
+      sub.textContent = `Percent of total population that is ${bl}, by 2010 census tract. ${isReal(to) ? "Measured" : "Interpolated"} year.`;
+    } else {
+      title.innerHTML = `Children per square mile, <span class="from">${to}</span>`;
+      sub.textContent = `Absolute density of children (${bl}), by 2010 census tract. ${isReal(to) ? "Measured" : "Interpolated"} year.`;
+    }
   } else {
     title.innerHTML = `<span class="from">${from}</span><span class="arrow">→</span><span>${to}</span>`;
-    sub.textContent = `Change in density of children (${bl}), by 2010 census tract. Red = gain, blue = loss, amber = built from near-zero, white = within ±10%.`;
+    if (isShare) {
+      sub.textContent = `Change in share of population under 18 (${bl}), in percentage points, by 2010 census tract. Red = rising share, blue = falling share.`;
+    } else {
+      sub.textContent = `Change in density of children (${bl}), by 2010 census tract. Red = gain, blue = loss, amber = built from near-zero, white = within ±10%.`;
+    }
   }
 
   renderTotals();
@@ -589,11 +718,37 @@ function render() {
 }
 
 function renderTotals() {
-  const { mode, from, to, band } = state;
+  const { mode, from, to, band, measure } = state;
   const wrap = document.getElementById("totals");
   const label = BAND_LABEL[band];
-  // Update the card header to reflect the band.
-  document.querySelector(".rail .card .card-hed").textContent =
+  const hed = document.querySelector(".rail .card .card-hed");
+  // Share mode: show regional share-under-18, not absolute child count.
+  if (measure === "share") {
+    hed.textContent = "Regional share under 18";
+    if (mode === "snapshot") {
+      const s = regionShareAt(to);
+      wrap.innerHTML = `
+        <div class="big-num">${s == null ? "—" : s.toFixed(1) + "%"}</div>
+        <div class="sub-num">${to} · ${isReal(to) ? "measured" : "interpolated"}</div>`;
+      return;
+    }
+    const s0 = regionShareAt(from), s1 = regionShareAt(to);
+    if (s0 == null || s1 == null) {
+      wrap.innerHTML = `<div class="big-num">—</div>
+        <div class="sub-num">Share data only available 2000–2023.</div>`;
+      return;
+    }
+    const pts = s1 - s0;
+    const cls = pts >= 0 ? "delta-pos" : "delta-neg";
+    wrap.innerHTML = `
+      <div class="big-num">${s1.toFixed(1)}%
+        <span class="delta ${cls}">${pts >= 0 ? "+" : ""}${pts.toFixed(1)} pp</span>
+      </div>
+      <div class="sub-num">${to} share, ${pts >= 0 ? "+" : ""}${pts.toFixed(1)} points vs ${from} (${s0.toFixed(1)}%)</div>`;
+    return;
+  }
+  // Density mode (original).
+  hed.textContent =
     band === "u18" ? "Total children under 18" : `Total children (${label})`;
   if (mode === "snapshot") {
     const t = bandTotalAt(to, band);
@@ -614,59 +769,100 @@ function renderTotals() {
 }
 
 function renderRanked() {
-  const { mode, from, to } = state;
+  const { mode, from, to, measure } = state;
   const gainers = document.getElementById("gainers");
   const losers = document.getElementById("losers");
   const gHed = document.getElementById("gainers-hed-range");
   const lHed = document.getElementById("losers-hed-range");
   const gLabel = document.getElementById("gainers-hed-label");
   const lLabel = document.getElementById("losers-hed-label");
+  const isShare = measure === "share";
 
   if (mode === "snapshot") {
-    // Snapshot mode: rank neighborhoods by kids-per-square-mile (aggregated
-    // count / aggregated land area). "Gainers/losers" doesn't apply.
-    gLabel.textContent = "Densest neighborhoods";
-    lLabel.textContent = "Least-dense neighborhoods";
+    // Snapshot: if density, rank by kids/sq mi; if share, rank by share-under-18.
+    if (isShare) {
+      gLabel.textContent = "Highest share of children";
+      lLabel.textContent = "Lowest share of children";
+    } else {
+      gLabel.textContent = "Densest neighborhoods";
+      lLabel.textContent = "Least-dense neighborhoods";
+    }
     gHed.textContent = ` (${to})`;
     lHed.textContent = ` (${to}, populated)`;
 
-    const agg = new Map(); // name -> { kids, area, n }
+    const agg = new Map(); // name -> { kids, area, pop, n }
     BASE.features.forEach(f => {
       const gj = f.properties.gisjoin;
       const name = NBHD[gj];
       if (!name) return;
       const k = countAt(gj, to);
       const a = AREA[gj] || 0;
-      if (!a) return;
-      const r = agg.get(name) || { kids: 0, area: 0, n: 0 };
-      r.kids += k; r.area += a; r.n += 1;
+      const p = totalAt(gj, to);
+      const r = agg.get(name) || { kids: 0, area: 0, pop: 0, n: 0 };
+      r.kids += k; r.area += a; if (p != null) r.pop += p; r.n += 1;
       agg.set(name, r);
     });
     const rows = [];
     agg.forEach((r, name) => {
-      if (r.kids < 200) return;  // avoid micro-totals
-      if (r.area <= 0) return;
-      rows.push({ name, density: r.kids / r.area, kids: r.kids, n: r.n });
+      if (r.kids < 200) return;
+      if (isShare) {
+        if (r.pop < 2000) return;
+        rows.push({ name, value: 100 * r.kids / r.pop, n: r.n, kids: r.kids });
+      } else {
+        if (r.area <= 0) return;
+        rows.push({ name, value: r.kids / r.area, n: r.n, kids: r.kids });
+      }
     });
-    const top = [...rows].sort((a, b) => b.density - a.density).slice(0, 7);
-    const bot = [...rows].sort((a, b) => a.density - b.density).slice(0, 7);
-    const fmt = n => Math.round(n).toLocaleString();
+    const top = [...rows].sort((a, b) => b.value - a.value).slice(0, 7);
+    const bot = [...rows].sort((a, b) => a.value - b.value).slice(0, 7);
+    const fmt = r => isShare
+      ? `${r.value.toFixed(1)}<span style="color:var(--muted);font-weight:400;font-family:inherit;font-size:10px;"> %</span>`
+      : `${Math.round(r.value).toLocaleString()}<span style="color:var(--muted);font-weight:400;font-family:inherit;font-size:10px;"> /mi²</span>`;
     const rowHtml = r =>
-      `<li><span class="geo">${r.name}<span style="color:var(--muted);font-weight:400;"> · ${r.n} tract${r.n===1?"":"s"}</span></span><span class="val">${fmt(r.density)}<span style="color:var(--muted);font-weight:400;font-family:inherit;font-size:10px;"> /mi²</span></span></li>`;
+      `<li><span class="geo">${r.name}<span style="color:var(--muted);font-weight:400;"> · ${r.n} tract${r.n===1?"":"s"}</span></span><span class="val">${fmt(r)}</span></li>`;
     gainers.innerHTML = top.map(rowHtml).join("");
     losers.innerHTML  = bot.map(rowHtml).join("");
     return;
   }
 
-  // Delta mode: gainers / losers by absolute change.
-  gLabel.textContent = "Biggest gainers";
-  lLabel.textContent = "Biggest losers";
-
+  // Delta mode.
   gHed.textContent = ` (${from}→${to})`;
   lHed.textContent = ` (${from}→${to})`;
-  // Aggregate by neighborhood: sum all tracts with the same NBHD label.
-  // Tracts with no neighborhood match are excluded from the ranking (they
-  // are almost all parks, water edges, or unincorporated fragments).
+  if (isShare) {
+    // Rank by percentage-point change in share under 18.
+    gLabel.textContent = "Biggest share gains";
+    lLabel.textContent = "Biggest share drops";
+    const agg = new Map();
+    BASE.features.forEach(f => {
+      const gj = f.properties.gisjoin;
+      const name = NBHD[gj];
+      if (!name) return;
+      const p0 = totalAt(gj, from), p1 = totalAt(gj, to);
+      if (p0 == null || p1 == null) return;
+      const k0 = countAt(gj, from), k1 = countAt(gj, to);
+      const r = agg.get(name) || { k0: 0, k1: 0, p0: 0, p1: 0, n: 0 };
+      r.k0 += k0; r.k1 += k1; r.p0 += p0; r.p1 += p1; r.n += 1;
+      agg.set(name, r);
+    });
+    const ranked = [];
+    agg.forEach((r, name) => {
+      if (r.p0 < 2000 || r.p1 < 2000) return;
+      const s0 = 100 * r.k0 / r.p0, s1 = 100 * r.k1 / r.p1;
+      ranked.push({ name, s0, s1, pts: s1 - s0, n: r.n });
+    });
+    const gain = [...ranked].sort((a, b) => b.pts - a.pts).slice(0, 7);
+    const loss = [...ranked].sort((a, b) => a.pts - b.pts).slice(0, 7);
+    const fmt = r => `${r.pts >= 0 ? "+" : ""}${r.pts.toFixed(1)}<span style="color:var(--muted);font-weight:400;font-family:inherit;font-size:10px;"> pp</span>`;
+    const rowHtml = (r, cls) =>
+      `<li><span class="geo">${r.name}<span style="color:var(--muted);font-weight:400;"> · ${r.n} tract${r.n===1?"":"s"}</span></span><span class="val ${cls}">${fmt(r)}</span></li>`;
+    gainers.innerHTML = gain.map(r => rowHtml(r, "delta-pos")).join("");
+    losers.innerHTML = loss.map(r => rowHtml(r, "delta-neg")).join("");
+    return;
+  }
+
+  // Density delta (original): gainers / losers by absolute child-count change.
+  gLabel.textContent = "Biggest gainers";
+  lLabel.textContent = "Biggest losers";
   const agg = new Map(); // name -> { k0, k1, nTracts }
   BASE.features.forEach(f => {
     const gj = f.properties.gisjoin;
@@ -679,7 +875,6 @@ function renderRanked() {
   });
   const ranked = [];
   agg.forEach((a, name) => {
-    // Require a meaningful residential baseline (500 children in either endpoint).
     if (a.k0 < 500 && a.k1 < 500) return;
     ranked.push({ name, k0: a.k0, k1: a.k1, delta: a.k1 - a.k0, n: a.n });
   });
@@ -714,7 +909,19 @@ const COUNTY_NAMES = {
 
 function renderLegend() {
   const el = document.getElementById("legend");
+  const isShare = state.measure === "share";
   if (state.mode === "snapshot") {
+    if (isShare) {
+      let html = `<span class="leg"><b style="color:var(--ink);font-family:'Fraunces',serif;font-weight:500;margin-right:4px;">% under 18</b></span>`;
+      for (let i = 0; i < S_BREAKS.length; i++) {
+        const hi = S_BREAKS[i + 1];
+        const lbl = hi ? `${S_BREAKS[i]}\u2013${hi}%` : `${S_BREAKS[i]}%+`;
+        html += `<span class="leg"><span class="sw" style="background:${S_COLORS[Math.min(i, S_COLORS.length-1)]}"></span>${lbl}</span>`;
+      }
+      html += `<span class="leg"><span class="sw" style="background:#d8d2c0"></span>too few children or too small a population</span>`;
+      el.innerHTML = html;
+      return;
+    }
     let html = `<span class="leg"><b style="color:var(--ink);font-family:'Fraunces',serif;font-weight:500;margin-right:4px;">Children / sq mi</b></span>`;
     for (let i = 0; i < D_BREAKS.length; i++) {
       const hi = D_BREAKS[i + 1];
@@ -722,16 +929,27 @@ function renderLegend() {
       html += `<span class="leg"><span class="sw" style="background:${D_COLORS[Math.min(i, D_COLORS.length-1)]}"></span>${lbl}</span>`;
     }
     el.innerHTML = html;
-  } else {
-    let html = `<span class="leg"><b style="color:var(--ink);font-family:'Fraunces',serif;font-weight:500;margin-right:4px;">Change in density</b></span>`;
-    const labels = ["-75%+","-75 to -50","-50 to -25","-25 to -10","±10%","+10 to +25","+25 to +50","+50 to +100","+100%+"];
-    DELTA_STOPS.forEach((s, i) => {
+    return;
+  }
+  // Delta mode
+  if (isShare) {
+    let html = `<span class="leg"><b style="color:var(--ink);font-family:'Fraunces',serif;font-weight:500;margin-right:4px;">Change in % under 18 (percentage points)</b></span>`;
+    const labels = ["\u2212 10+ pp","\u2212 10 to \u22125","\u2212 5 to \u22122","\u2212 2 to \u22120.5","\u00b10.5","+0.5 to +2","+2 to +5","+5 to +10","+10+ pp"];
+    SHARE_DELTA_STOPS.forEach((s, i) => {
       html += `<span class="leg"><span class="sw" style="background:${s.c}"></span>${labels[i]}</span>`;
     });
-    html += `<span class="leg"><span class="sw" style="background:#c98622"></span>new residential (landfill / industrial conversion)</span>`;
-    html += `<span class="leg"><span class="sw" style="background:#d8d2c0"></span>too few children</span>`;
+    html += `<span class="leg"><span class="sw" style="background:#d8d2c0"></span>too few children or too small a population</span>`;
     el.innerHTML = html;
+    return;
   }
+  let html = `<span class="leg"><b style="color:var(--ink);font-family:'Fraunces',serif;font-weight:500;margin-right:4px;">Change in density</b></span>`;
+  const labels = ["-75%+","-75 to -50","-50 to -25","-25 to -10","±10%","+10 to +25","+25 to +50","+50 to +100","+100%+"];
+  DELTA_STOPS.forEach((s, i) => {
+    html += `<span class="leg"><span class="sw" style="background:${s.c}"></span>${labels[i]}</span>`;
+  });
+  html += `<span class="leg"><span class="sw" style="background:#c98622"></span>new residential (landfill / industrial conversion)</span>`;
+  html += `<span class="leg"><span class="sw" style="background:#d8d2c0"></span>too few children</span>`;
+  el.innerHTML = html;
 }
 
 // ---------- controls ----------
@@ -788,10 +1006,17 @@ document.querySelectorAll(".chip.age-chip").forEach(btn => {
     state.band = band;
     document.querySelectorAll(".chip.age-chip").forEach(c => c.classList.toggle("on", c === btn));
     // Non-u18 bands: force snapshot mode (the data only exists for a handful of
-    // years, and a sparse delta view is confusing). Toggling back to u18
-    // leaves the mode alone.
+    // years, and a sparse delta view is confusing). Also force density measure
+    // — share-under-18 is only meaningful for the whole under-18 group.
+    // Toggling back to u18 leaves the mode alone.
     if (band !== "u18") {
       state.mode = "snapshot";
+      state.measure = "density";
+      document.querySelectorAll(".chip.measure-chip").forEach(c => {
+        c.classList.toggle("on", c.dataset.measure === "density");
+      });
+      document.getElementById("measure-note").textContent = "";
+      document.getElementById("scrub").min = YEAR_MIN;
       state.to = clampToBand(state.to);
       document.getElementById("to-year").value = state.to;
       document.getElementById("mode-snapshot").classList.add("on");
@@ -845,26 +1070,58 @@ function populateBandYears() {
 function updateYearOptions() {
   const fy = document.getElementById("from-year");
   const ty = document.getElementById("to-year");
-  const avail = state.band === "u18" ? ANCHOR_YEARS : [...BAND_YEARS_SET].sort((a,b)=>a-b);
+  let avail = state.band === "u18" ? ANCHOR_YEARS : [...BAND_YEARS_SET].sort((a,b)=>a-b);
+  if (state.measure === "share") avail = avail.filter(y => y >= SHARE_YEAR_MIN);
   for (const sel of [fy, ty]) {
     const cur = sel.value;
     sel.innerHTML = "";
     for (const y of avail) {
       sel.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
     }
-    sel.value = String(clampToBand(+cur));
+    const clamped = clampToBand(+cur);
+    const snapped = (state.measure === "share" && clamped < SHARE_YEAR_MIN) ? SHARE_YEAR_MIN : clamped;
+    sel.value = String(snapped);
   }
 }
 
 function updatePresetAvailability() {
   document.querySelectorAll(".chip[data-preset]").forEach(btn => {
     const [f, t] = btn.dataset.preset.split(",").map(Number);
-    const ok = (state.band === "u18") || (BAND_YEARS_SET.has(f) && BAND_YEARS_SET.has(t));
+    let ok = (state.band === "u18") || (BAND_YEARS_SET.has(f) && BAND_YEARS_SET.has(t));
+    if (ok && state.measure === "share") ok = (f >= SHARE_YEAR_MIN && t >= SHARE_YEAR_MIN);
     btn.disabled = !ok;
     btn.style.opacity = ok ? "1" : "0.35";
     btn.style.cursor = ok ? "pointer" : "not-allowed";
   });
 }
+
+document.querySelectorAll(".chip.measure-chip").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const m = btn.dataset.measure;
+    if (m === state.measure) return;
+    if (m === "share" && !TOTALS) return;  // data not loaded (shouldn't happen)
+    state.measure = m;
+    document.querySelectorAll(".chip.measure-chip").forEach(c => c.classList.toggle("on", c === btn));
+    // Share view only has 2000-2023 data. Snap year selection if needed.
+    if (m === "share") {
+      if (state.from < SHARE_YEAR_MIN) state.from = SHARE_YEAR_MIN;
+      if (state.to < SHARE_YEAR_MIN) state.to = SHARE_YEAR_MIN;
+      document.getElementById("from-year").value = state.from;
+      document.getElementById("to-year").value = state.to;
+      document.getElementById("scrub").min = SHARE_YEAR_MIN;
+      if (+document.getElementById("scrub").value < SHARE_YEAR_MIN) {
+        document.getElementById("scrub").value = SHARE_YEAR_MIN;
+      }
+      document.getElementById("measure-note").textContent = "Share data: 2000–2023 only.";
+    } else {
+      document.getElementById("scrub").min = YEAR_MIN;
+      document.getElementById("measure-note").textContent = "";
+    }
+    updateYearOptions();
+    updatePresetAvailability();
+    render();
+  });
+});
 
 const snapBtn = document.getElementById("mode-snapshot");
 snapBtn.addEventListener("click", () => {
@@ -898,9 +1155,10 @@ Promise.all([
   fetch("summary.json").then(r => r.json()),
   fetch("neighborhoods.json").then(r => r.ok ? r.json() : {}).catch(() => ({})),
   fetch("age_bands.json").then(r => r.ok ? r.json() : null).catch(() => null),
-]).then(([base, ts, counts, summary, nbhd, bands]) => {
+  fetch("totals_timeseries.json").then(r => r.ok ? r.json() : null).catch(() => null),
+]).then(([base, ts, counts, summary, nbhd, bands, totals]) => {
   BASE = base; TS = ts; COUNTS = counts; SUMMARY = summary; NBHD = nbhd || {};
-  AGEBANDS = bands;
+  AGEBANDS = bands; TOTALS = totals;
   if (AGEBANDS) AGEBANDS.years.forEach(y => BAND_YEARS_SET.add(y));
   BASE.features.forEach(f => {
     AREA[f.properties.gisjoin]  = f.properties.land_sqmi;
