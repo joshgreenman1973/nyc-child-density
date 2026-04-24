@@ -298,13 +298,15 @@
       Long Island, survey feet). Tracts under 0.005 sq mi (airports, parks, water) are excluded.</p>
     <p><b>Change calculation.</b> The map colors each tract by percent change in density between
       the "from" and "to" year. The ranked "biggest gainers" and "biggest losers" lists, however,
-      use <i>absolute</i> change in child count (kids added or lost), because percent change is
+      use <i>absolute</i> change in child count (kids added or lost) because percent change is
       unstable on small bases — a tract that went from 5 children to 500 is a +9,900% swing but
-      not necessarily a bigger story than a Williamsburg tract that went from 900 to 1,800.
-      Ranked lists also require both endpoints to have at least 100 children, to exclude
-      institutional, industrial, or otherwise non-residential tracts (Rikers Island, rail yards,
-      cemeteries) where the count is near zero by construction. A single neighborhood is
-      represented by its single biggest-swing tract in the list.</p>
+      not necessarily a bigger story than a neighborhood that added 20,000 children. The ranked
+      lists also <b>aggregate all tracts within a neighborhood</b> (NYC Planning NTA, or TIGER
+      place outside NYC) so the number reported is the true neighborhood-wide change, not a
+      single cherry-picked tract inside it. Neighborhoods with fewer than 500 children at both
+      endpoints are excluded. Tracts with no neighborhood match (typically large parks or
+      unincorporated fragments at county edges) are excluded from the rankings but still
+      appear on the map.</p>
     <p><b>Caveats.</b> (1) The area-weighted crosswalk assumes uniform population density within
       each historical tract. Where a 1970 tract was split along a density boundary (e.g., one half
       a housing project, the other half a park), the split gets an even allocation rather than a
@@ -500,40 +502,32 @@ function renderRanked() {
 
   gHed.textContent = ` (${from}→${to})`;
   lHed.textContent = ` (${from}→${to})`;
-  const ranked = [];
-  const seenNbhd = new Map(); // dedupe: keep the single biggest-swing tract per neighborhood
+  // Aggregate by neighborhood: sum all tracts with the same NBHD label.
+  // Tracts with no neighborhood match are excluded from the ranking (they
+  // are almost all parks, water edges, or unincorporated fragments).
+  const agg = new Map(); // name -> { k0, k1, nTracts }
   BASE.features.forEach(f => {
     const gj = f.properties.gisjoin;
-    const d0 = densityAt(gj, from), d1 = densityAt(gj, to);
+    const name = NBHD[gj];
+    if (!name) return;
     const k0 = countAt(gj, from), k1 = countAt(gj, to);
-    // Require BOTH endpoints to have a meaningful residential baseline.
-    // This removes industrial/institutional/landfill tracts where fractional
-    // baselines produce meaningless percent swings.
-    if (k0 < 100 && k1 < 100) return;
-    const delta = k1 - k0;
-    ranked.push({ f, delta, k0, k1, gj });
+    const a = agg.get(name) || { k0: 0, k1: 0, n: 0 };
+    a.k0 += k0; a.k1 += k1; a.n += 1;
+    agg.set(name, a);
   });
-  // Rank by absolute change in child count (kids added/lost), not percent.
-  const gain = [...ranked].sort((a, b) => b.delta - a.delta);
-  const loss = [...ranked].sort((a, b) => a.delta - b.delta);
-  const pickTop = (arr) => {
-    const seen = new Set(); const out = [];
-    for (const r of arr) {
-      const name = nbhdLabel(r.f);
-      if (seen.has(name)) continue;
-      seen.add(name); out.push(r);
-      if (out.length === 6) break;
-    }
-    return out;
-  };
-  const gainTop = pickTop(gain), lossTop = pickTop(loss);
-  const signed = (n) => (n > 0 ? "+" : "") + n.toLocaleString();
-  gainers.innerHTML = gainTop.map(r =>
-    `<li><span class="geo">${nbhdLabel(r.f)}</span><span class="val delta-pos">${signed(Math.round(r.delta))}</span></li>`
-  ).join("");
-  losers.innerHTML = lossTop.map(r =>
-    `<li><span class="geo">${nbhdLabel(r.f)}</span><span class="val delta-neg">${Math.round(r.delta).toLocaleString()}</span></li>`
-  ).join("");
+  const ranked = [];
+  agg.forEach((a, name) => {
+    // Require a meaningful residential baseline (500 children in either endpoint).
+    if (a.k0 < 500 && a.k1 < 500) return;
+    ranked.push({ name, k0: a.k0, k1: a.k1, delta: a.k1 - a.k0, n: a.n });
+  });
+  const gain = [...ranked].sort((a, b) => b.delta - a.delta).slice(0, 7);
+  const loss = [...ranked].sort((a, b) => a.delta - b.delta).slice(0, 7);
+  const signed = (n) => (n > 0 ? "+" : "") + Math.round(n).toLocaleString();
+  const rowHtml = (r, cls) =>
+    `<li><span class="geo">${r.name}<span style="color:var(--muted);font-weight:400;"> · ${r.n} tract${r.n===1?"":"s"}</span></span><span class="val ${cls}">${signed(r.delta)}</span></li>`;
+  gainers.innerHTML = gain.map(r => rowHtml(r, "delta-pos")).join("");
+  losers.innerHTML = loss.map(r => rowHtml(r, "delta-neg")).join("");
 }
 
 function tractNumber(f) {
