@@ -36,7 +36,24 @@ YEAR_MAX = 2023
 
 
 def load_nhgis():
-    """Returns: {gisjoin_2010 : {1970: v, 1980: v, ...}}"""
+    """Returns: {gisjoin_2010 : {1970: v, 1980: v, ...}}
+
+    Uses the normalized (area-weighted crosswalk) counts built by
+    scripts/build_crosswalk.py if available; otherwise falls back to the
+    nominal tract-code join.
+    """
+    norm_path = DATA / "normalized_counts.json"
+    if norm_path.exists():
+        print("  using area-weighted normalized counts")
+        norm = json.loads(norm_path.read_text())
+        out = {}
+        for d, m in norm.items():
+            dyear = int(d)
+            for gj, v in m.items():
+                out.setdefault(gj, {})[dyear] = float(v)
+        return out
+
+    # Fallback: nominal join
     df = pd.read_csv(
         DATA / "nhgis_unpacked/nhgis0001_csv/nhgis0001_ts_nominal_tract.csv",
         dtype=str,

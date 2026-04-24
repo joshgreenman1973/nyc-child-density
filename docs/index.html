@@ -265,19 +265,34 @@
       between decennial anchors are linearly interpolated.</p>
     <p><b>Geography.</b> The study area is the five boroughs of New York City plus every county
       sharing a land or water border with NYC: Westchester and Nassau (NY); Bergen, Hudson, Union,
-      and Middlesex (NJ). Tracts are rendered on 2010 census tract boundaries. NHGIS decennial
-      values join by nominal tract code; ACS values join by exact GEOID. A future iteration may
-      normalize earlier decades to 2010 boundaries using NHGIS population-weighted crosswalks.</p>
+      and Middlesex (NJ). Everything is rendered on 2010 census tract boundaries. Tract polygons
+      are clipped against TIGER/Line AREAWATER layers so rivers and the harbor are not painted by
+      the choropleth.</p>
+    <p><b>Normalization across decades.</b> Tract boundaries are redrawn every decennial census,
+      so 1970, 1980, 1990, and 2000 tracts are not the same shapes as 2010 tracts. To compare
+      apples to apples, each historical decade's counts are redistributed to 2010 tracts using
+      an area-weighted crosswalk: for every historical tract we compute the geometric overlap
+      with each 2010 tract it touches, and allocate its child count proportional to the area
+      overlap. Historical tract polygons come from NHGIS (table extract #2, shapefiles
+      US_tract_1970 through US_tract_2000). After redistribution, decade totals match the raw
+      NHGIS sums within rounding - the redistribution doesn't change the regional total, it just
+      moves counts between tracts that were split or merged. This is a geometric approximation;
+      a fully population-weighted crosswalk (using 2010 block populations to decide where a
+      split-tract's people actually lived) would be marginally more accurate but requires an
+      additional step not yet implemented.</p>
     <p><b>Density.</b> Children per square mile = count ÷ land area in sq mi. Land area is
       computed from 2010 TIGER cartographic boundaries projected to EPSG:2263 (NY State Plane,
       Long Island, survey feet). Tracts under 0.005 sq mi (airports, parks, water) are excluded.</p>
     <p><b>Change calculation.</b> Percent change in density between the "from" and "to" year for
       each tract. Tracts with zero baseline density show no color.</p>
-    <p><b>Caveats.</b> (1) Nominal tract-code matching for NHGIS decennial data can produce
-      artifacts where tracts were redrawn. (2) ACS 5-year estimates carry margins of error at the
-      tract level; ranked lists should be read as order-of-magnitude. (3) Tract GEOIDs for ACS
-      endyears 2020 through 2023 use 2020 boundaries; where a GEOID changed between 2010 and 2020
-      the pre-2020 ACS value is held and delta values may understate change.</p>
+    <p><b>Caveats.</b> (1) The area-weighted crosswalk assumes uniform population density within
+      each historical tract. Where a 1970 tract was split along a density boundary (e.g., one half
+      a housing project, the other half a park), the split gets an even allocation rather than a
+      population-aware one. (2) ACS 5-year estimates carry margins of error at the tract level;
+      the ranked lists should be read as order-of-magnitude, not precise. (3) Tract GEOIDs for
+      ACS endyears 2020 through 2023 use 2020 boundaries; where a 2020 GEOID differs from its
+      2010 counterpart the ACS value joins the 2010 tract by exact string match and non-matching
+      tracts hold their 2019 values.</p>
     <p><b>Sources.</b> U.S. Census Bureau via api.census.gov. IPUMS NHGIS, University of Minnesota:
       Schroeder, J., Van Riper, D., Manson, S., et al. IPUMS National Historical Geographic
       Information System, version 20.0. Minneapolis: IPUMS. 2025.
