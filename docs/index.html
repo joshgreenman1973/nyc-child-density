@@ -214,10 +214,12 @@
   <div class="mast-inner">
     <div class="kicker">A children's geography of New York</div>
     <h1><span class="nobr">Where the <em>children</em> went,</span><br>1970 to 2023</h1>
-    <p class="dek">The five boroughs plus every bordering county in New York and New Jersey have
-      lost roughly 845,000 children under 18 since 1970. But the losses aren't evenly distributed,
-      and in a handful of neighborhoods the child population has more than doubled. Pan the map to
-      see where — and compare any two years below.</p>
+    <p class="dek">Between 1970 and 2023 the five boroughs lost <b id="dek-nyc">490,000</b> children under 18
+      (<span id="dek-nyc-pct">−22%</span>); the bordering inner-ring counties in New York and New
+      Jersey lost another <b id="dek-sub">443,000</b> (<span id="dek-sub-pct">−27%</span>). Both shed
+      kids — the suburbs, more steeply than the city. But the losses aren't evenly distributed, and
+      in a handful of neighborhoods the child population has more than doubled. Pan the map to see
+      where, and compare any two years below.</p>
   </div>
 </div>
 
@@ -901,10 +903,29 @@ Promise.all([
   updateBandModeUI();
   buildLayer();
   render();
-  // Update dek with real total
-  const lost = SUMMARY.total[1970] - SUMMARY.total[2023];
-  document.querySelector(".dek").innerHTML = document.querySelector(".dek").innerHTML
-    .replace("roughly 845,000", "<b>" + lost.toLocaleString() + "</b>");
+  // Update dek with real NYC-vs-suburbs split computed from the counts series.
+  const NYC_COUNTIES = new Set(["005", "047", "061", "081", "085"]);
+  let nyc70 = 0, nyc23 = 0, sub70 = 0, sub23 = 0;
+  const y1970 = COUNTS.years.indexOf(1970);
+  const y2023 = COUNTS.years.indexOf(2023);
+  for (const gj in COUNTS.tracts) {
+    const state = gj.slice(1, 3), county = gj.slice(4, 7);
+    const arr = COUNTS.tracts[gj];
+    const v70 = arr[y1970], v23 = arr[y2023];
+    if (state === "36" && NYC_COUNTIES.has(county)) {
+      nyc70 += v70; nyc23 += v23;
+    } else {
+      sub70 += v70; sub23 += v23;
+    }
+  }
+  const nycLost = nyc70 - nyc23, subLost = sub70 - sub23;
+  const nycPct = Math.round((nycLost / nyc70) * 100);
+  const subPct = Math.round((subLost / sub70) * 100);
+  const round1k = (n) => Math.round(n / 1000) * 1000;
+  document.getElementById("dek-nyc").textContent = round1k(nycLost).toLocaleString();
+  document.getElementById("dek-sub").textContent = round1k(subLost).toLocaleString();
+  document.getElementById("dek-nyc-pct").textContent = "\u2212" + nycPct + "%";
+  document.getElementById("dek-sub-pct").textContent = "\u2212" + subPct + "%";
 });
 </script>
 </body>
