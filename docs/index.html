@@ -217,36 +217,60 @@
 
   <div class="bar">
     <div class="bar-row">
-      <span class="bar-label">Compare</span>
-      <button class="chip on" data-preset="1970,2023">1970 vs 2023</button>
-      <button class="chip" data-preset="1970,1990">1970 vs 1990</button>
-      <button class="chip" data-preset="1990,2023">1990 vs 2023</button>
-      <button class="chip" data-preset="2000,2023">2000 vs 2023</button>
-      <button class="chip" data-preset="2010,2023">2010 vs 2023</button>
-      <span style="flex:1"></span>
-      <button class="chip" id="mode-snapshot">Single-year snapshot</button>
-    </div>
-    <div class="bar-row">
       <span class="bar-label">Age group</span>
       <button class="chip age-chip on" data-band="u18">All <span style="color:var(--muted);font-weight:400">(under 18)</span></button>
       <button class="chip age-chip" data-band="u5">Under 5</button>
       <button class="chip age-chip" data-band="5_9">5&ndash;9</button>
       <button class="chip age-chip" data-band="10_14">10&ndash;14</button>
       <button class="chip age-chip" data-band="15_17">15&ndash;17</button>
-      <span style="flex:1"></span>
-      <span id="age-note" style="font-size:11px;color:var(--muted);"></span>
     </div>
-    <div class="bar-row" id="custom-row">
-      <span class="bar-label">Custom</span>
-      <span style="font-size:12px; color: var(--muted);">from</span>
-      <select class="chip" id="from-year"></select>
-      <span style="font-size:12px; color: var(--muted);">to</span>
-      <select class="chip" id="to-year"></select>
-      <span style="flex:1"></span>
-      <span class="scrub" id="scrub-wrap" style="flex-basis:260px;">
-        <span>Scrub</span>
-        <input type="range" id="scrub" min="1970" max="2023" step="1" value="2023">
-      </span>
+
+    <!-- Controls shown ONLY in under-18 mode: full history, compare two years -->
+    <div id="u18-controls">
+      <div class="bar-row">
+        <span class="bar-label">Compare</span>
+        <button class="chip on" data-preset="1970,2023">1970 vs 2023</button>
+        <button class="chip" data-preset="1970,1990">1970 vs 1990</button>
+        <button class="chip" data-preset="1990,2023">1990 vs 2023</button>
+        <button class="chip" data-preset="2000,2023">2000 vs 2023</button>
+        <button class="chip" data-preset="2010,2023">2010 vs 2023</button>
+        <span style="flex:1"></span>
+        <button class="chip" id="mode-snapshot">Single-year snapshot</button>
+      </div>
+      <div class="bar-row" id="custom-row">
+        <span class="bar-label">Custom</span>
+        <span style="font-size:12px; color: var(--muted);">from</span>
+        <select class="chip" id="from-year"></select>
+        <span style="font-size:12px; color: var(--muted);">to</span>
+        <select class="chip" id="to-year"></select>
+        <span style="flex:1"></span>
+        <span class="scrub" id="scrub-wrap" style="flex-basis:260px;">
+          <span>Scrub</span>
+          <input type="range" id="scrub" min="1970" max="2023" step="1" value="2023">
+        </span>
+      </div>
+    </div>
+
+    <!-- Controls shown ONLY in age-band mode: snapshot-only year picker -->
+    <div id="band-controls" style="display:none;">
+      <div class="bar-row">
+        <span class="bar-label">Year</span>
+        <select class="chip" id="band-year"></select>
+        <span style="flex:1"></span>
+        <span class="scrub" style="flex-basis:260px;">
+          <span>Scrub</span>
+          <input type="range" id="band-scrub" min="2000" max="2023" step="1" value="2023">
+        </span>
+      </div>
+      <div class="bar-row" style="padding-top:8px;border-top:1px dashed var(--rule);margin-top:4px;">
+        <span style="font-size:11px;color:var(--muted);line-height:1.5;">
+          <b style="color:var(--ink-soft);">Age-band view is a density snapshot only.</b>
+          The underlying sources (decennial P12, ACS B01001) report age bands for 2000, 2010,
+          and 2011–2023 — no 2001–2009, no pre-2000. Year-over-year change is not shown
+          because the two-decade gap would be misleading. Toggle back to <i>All (under 18)</i>
+          to compare across history.
+        </span>
+      </div>
     </div>
   </div>
 
@@ -268,11 +292,11 @@
       <div id="totals"></div>
     </div>
     <div class="card">
-      <div class="card-hed">Biggest gainers <span id="gainers-hed-range" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400;"></span></div>
+      <div class="card-hed"><span id="gainers-hed-label">Biggest gainers</span> <span id="gainers-hed-range" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400;"></span></div>
       <ol class="row-list" id="gainers"></ol>
     </div>
     <div class="card">
-      <div class="card-hed">Biggest losers <span id="losers-hed-range" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400;"></span></div>
+      <div class="card-hed"><span id="losers-hed-label">Biggest losers</span> <span id="losers-hed-range" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400;"></span></div>
       <ol class="row-list" id="losers"></ol>
     </div>
   </aside>
@@ -366,8 +390,9 @@
 // ---------- data ----------
 const YEAR_MIN = 1970, YEAR_MAX = 2023;
 let BASE = null, TS = null, COUNTS = null, SUMMARY = null, NBHD = {};
-let AGEBANDS = null;             // loaded from age_bands.json
+let AGEBANDS = null;             // loaded from age_bands.json (keyed by geoid)
 let AREA = {};                   // gisjoin -> land_sqmi (precomputed)
+let GEOID = {};                  // gisjoin -> geoid (precomputed)
 let state = { mode: "delta", from: 1970, to: 2023, band: "u18" };
 const BAND_YEARS_SET = new Set();   // years available for non-u18 bands
 const BAND_LABEL = {
@@ -377,7 +402,8 @@ const BAND_LABEL = {
 // ---------- data accessors (band-aware) ----------
 function countBand(gj, year, band) {
   if (band === "u18") return COUNTS.tracts[gj] ? COUNTS.tracts[gj][year - YEAR_MIN] : 0;
-  const rec = AGEBANDS && AGEBANDS.tracts[gj];
+  const geoid = GEOID[gj];
+  const rec = AGEBANDS && geoid && AGEBANDS.tracts[geoid];
   if (!rec || !rec[band]) return 0;
   const v = rec[band][year];
   return v == null ? 0 : v;
@@ -574,30 +600,48 @@ function renderRanked() {
   const losers = document.getElementById("losers");
   const gHed = document.getElementById("gainers-hed-range");
   const lHed = document.getElementById("losers-hed-range");
+  const gLabel = document.getElementById("gainers-hed-label");
+  const lLabel = document.getElementById("losers-hed-label");
 
   if (mode === "snapshot") {
+    // Snapshot mode: rank neighborhoods by kids-per-square-mile (aggregated
+    // count / aggregated land area). "Gainers/losers" doesn't apply.
+    gLabel.textContent = "Densest neighborhoods";
+    lLabel.textContent = "Least-dense neighborhoods";
     gHed.textContent = ` (${to})`;
-    lHed.textContent = ` (${to})`;
-    // For snapshot: top density tracts vs bottom (among populated)
-    const ranked = [];
+    lHed.textContent = ` (${to}, populated)`;
+
+    const agg = new Map(); // name -> { kids, area, n }
     BASE.features.forEach(f => {
       const gj = f.properties.gisjoin;
-      const d = densityAt(gj, to);
+      const name = NBHD[gj];
+      if (!name) return;
       const k = countAt(gj, to);
-      ranked.push({ f, d, k });
+      const a = AREA[gj] || 0;
+      if (!a) return;
+      const r = agg.get(name) || { kids: 0, area: 0, n: 0 };
+      r.kids += k; r.area += a; r.n += 1;
+      agg.set(name, r);
     });
-    const top = [...ranked].sort((a, b) => b.d - a.d).slice(0, 6);
-    gHed.textContent = " (highest density)";
-    lHed.textContent = " (lowest density, populated)";
-    const withKids = ranked.filter(r => r.k > 20).sort((a, b) => a.d - b.d).slice(0, 6);
-    gainers.innerHTML = top.map(r =>
-      `<li><span class="geo">${label(r.f)}</span><span class="val">${Math.round(r.d).toLocaleString()}</span></li>`
-    ).join("");
-    losers.innerHTML = withKids.map(r =>
-      `<li><span class="geo">${label(r.f)}</span><span class="val">${Math.round(r.d).toLocaleString()}</span></li>`
-    ).join("");
+    const rows = [];
+    agg.forEach((r, name) => {
+      if (r.kids < 200) return;  // avoid micro-totals
+      if (r.area <= 0) return;
+      rows.push({ name, density: r.kids / r.area, kids: r.kids, n: r.n });
+    });
+    const top = [...rows].sort((a, b) => b.density - a.density).slice(0, 7);
+    const bot = [...rows].sort((a, b) => a.density - b.density).slice(0, 7);
+    const fmt = n => Math.round(n).toLocaleString();
+    const rowHtml = r =>
+      `<li><span class="geo">${r.name}<span style="color:var(--muted);font-weight:400;"> · ${r.n} tract${r.n===1?"":"s"}</span></span><span class="val">${fmt(r.density)}<span style="color:var(--muted);font-weight:400;font-family:inherit;font-size:10px;"> /mi²</span></span></li>`;
+    gainers.innerHTML = top.map(rowHtml).join("");
+    losers.innerHTML  = bot.map(rowHtml).join("");
     return;
   }
+
+  // Delta mode: gainers / losers by absolute change.
+  gLabel.textContent = "Biggest gainers";
+  lLabel.textContent = "Biggest losers";
 
   gHed.textContent = ` (${from}→${to})`;
   lHed.textContent = ` (${from}→${to})`;
@@ -724,21 +768,60 @@ document.querySelectorAll(".chip.age-chip").forEach(btn => {
     if (band === state.band) return;
     state.band = band;
     document.querySelectorAll(".chip.age-chip").forEach(c => c.classList.toggle("on", c === btn));
-    // Snap selected years to valid band years and update the dropdowns/presets.
-    state.from = clampToBand(state.from);
-    state.to   = clampToBand(state.to);
-    document.getElementById("from-year").value = state.from;
-    document.getElementById("to-year").value   = state.to;
+    // Non-u18 bands: force snapshot mode (the data only exists for a handful of
+    // years, and a sparse delta view is confusing). Toggling back to u18
+    // leaves the mode alone.
+    if (band !== "u18") {
+      state.mode = "snapshot";
+      state.to = clampToBand(state.to);
+      document.getElementById("to-year").value = state.to;
+      document.getElementById("mode-snapshot").classList.add("on");
+      clearPresetHighlight();
+    } else {
+      state.from = clampToBand(state.from);
+      state.to   = clampToBand(state.to);
+      document.getElementById("from-year").value = state.from;
+      document.getElementById("to-year").value   = state.to;
+    }
     updateYearOptions();
     updatePresetAvailability();
-    // Band note
-    const note = document.getElementById("age-note");
-    note.textContent = band === "u18"
-      ? ""
-      : "Age-band data: 2000, 2010, and 2011–2023 only (no 2001–2009, no pre-2000).";
+    updateBandModeUI();
     render();
   });
 });
+
+function updateBandModeUI() {
+  const bandActive = state.band !== "u18";
+  document.getElementById("u18-controls").style.display = bandActive ? "none" : "";
+  document.getElementById("band-controls").style.display = bandActive ? "" : "none";
+}
+
+function populateBandYears() {
+  const sel = document.getElementById("band-year");
+  const scrub = document.getElementById("band-scrub");
+  if (!sel || !scrub) return;
+  const years = [...BAND_YEARS_SET].sort((a, b) => a - b);
+  sel.innerHTML = "";
+  for (const y of years) {
+    sel.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
+  }
+  sel.value = String(state.to);
+  scrub.min = years[0]; scrub.max = years[years.length - 1];
+  scrub.value = state.to;
+  sel.addEventListener("change", () => {
+    state.to = +sel.value;
+    scrub.value = state.to;
+    render();
+  });
+  // Scrub snaps to the nearest available band year.
+  scrub.addEventListener("input", () => {
+    const y = +scrub.value;
+    const snapped = clampToBand(y);
+    state.to = snapped;
+    sel.value = String(snapped);
+    render();
+  });
+}
 
 function updateYearOptions() {
   const fy = document.getElementById("from-year");
@@ -800,8 +883,13 @@ Promise.all([
   BASE = base; TS = ts; COUNTS = counts; SUMMARY = summary; NBHD = nbhd || {};
   AGEBANDS = bands;
   if (AGEBANDS) AGEBANDS.years.forEach(y => BAND_YEARS_SET.add(y));
-  BASE.features.forEach(f => AREA[f.properties.gisjoin] = f.properties.land_sqmi);
+  BASE.features.forEach(f => {
+    AREA[f.properties.gisjoin]  = f.properties.land_sqmi;
+    GEOID[f.properties.gisjoin] = f.properties.geoid;
+  });
   populateYears();
+  populateBandYears();
+  updateBandModeUI();
   buildLayer();
   render();
   // Update dek with real total
