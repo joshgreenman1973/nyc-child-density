@@ -44,10 +44,11 @@
   }
   h1 {
     font-family: "Fraunces", Georgia, serif;
-    font-size: clamp(34px, 4.8vw, 64px);
-    line-height: 1.02; letter-spacing: -0.02em; font-weight: 500;
-    margin: 0 0 16px; max-width: 14ch;
+    font-size: clamp(32px, 4.4vw, 58px);
+    line-height: 1.05; letter-spacing: -0.02em; font-weight: 500;
+    margin: 0 0 16px; max-width: 22ch;
   }
+  h1 .nobr { white-space: nowrap; }
   h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
   .dek {
     font-family: "Fraunces", Georgia, serif;
@@ -204,7 +205,7 @@
 <div class="mast">
   <div class="mast-inner">
     <div class="kicker">A children's geography of New York</div>
-    <h1>Where the <em>children</em> went,<br>1970 to 2023</h1>
+    <h1><span class="nobr">Where the <em>children</em> went,</span><br>1970 to 2023</h1>
     <p class="dek">The five boroughs plus every bordering county in New York and New Jersey have
       lost roughly 845,000 children under 18 since 1970. But the losses aren't evenly distributed,
       and in a handful of neighborhoods the child population has more than doubled. Pan the map to
