@@ -86,6 +86,15 @@ def load_geom():
         g = g.dissolve(by="gisjoin", as_index=False)
         frames.append(g[["gisjoin", "geoid", "geometry"]])
     out = gpd.GeoDataFrame(pd.concat(frames, ignore_index=True), crs=frames[0].crs)
+
+    water_path = DATA / "water_mask.geojson"
+    if water_path.exists():
+        print("  clipping tract geometries against water mask...")
+        water = gpd.read_file(water_path).to_crs(out.crs)
+        water_union = water.geometry.union_all() if hasattr(water.geometry, "union_all") \
+            else water.geometry.unary_union
+        out["geometry"] = out.geometry.difference(water_union)
+
     proj = out.to_crs(epsg=2263)
     out["land_sqmi"] = proj.geometry.area / 27_878_400
     return out

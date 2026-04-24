@@ -3,355 +3,593 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NYC-area child density, 1970 to 2023</title>
+<title>Where the children went — NYC-area child density, 1970 to 2023</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --ink:#111; --muted:#666; --bg:#f7f5f0; --card:#fff; --accent:#c9472b; }
+  :root {
+    --ink: #1a1915;
+    --ink-soft: #3c3a33;
+    --muted: #706c5f;
+    --rule: #d9d3c2;
+    --bg: #f4f0e6;
+    --paper: #fbf8f0;
+    --accent: #a4281a;
+    --loss: #2d6a9f;
+    --gain: #a4281a;
+  }
   * { box-sizing: border-box; }
-  html, body { margin:0; padding:0; background:var(--bg); color:var(--ink);
-    font-family:"Inter",system-ui,-apple-system,sans-serif; }
-  header { padding:20px 24px 12px; max-width:1100px; margin:0 auto; }
-  h1 { font-family:Georgia,"Times New Roman",serif; font-size:28px; margin:0 0 4px;
-    font-weight:600; letter-spacing:-0.01em; }
-  .sub { color:var(--muted); font-size:14px; max-width:800px; }
-  main { max-width:1100px; margin:0 auto; padding:0 24px 40px; }
-  .panel { background:var(--card); border:1px solid #e6e1d5; border-radius:4px;
-    padding:16px; margin-bottom:14px; }
-  #map { height:640px; border-radius:4px; }
-  .controls { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-  .year-display { font-family:Georgia,serif; font-size:48px; font-weight:600;
-    min-width:110px; color:var(--accent); line-height:1; }
-  .slider-wrap { flex:1; min-width:240px; position:relative; }
-  input[type=range] { width:100%; }
-  button { background:var(--ink); color:#fff; border:none; padding:8px 14px;
-    border-radius:3px; font-size:13px; cursor:pointer; font-weight:500; }
-  button:hover { background:#333; }
-  button.ghost { background:#fff; color:var(--ink); border:1px solid #ccc; }
-  button.ghost.on { background:var(--accent); color:#fff; border-color:var(--accent); }
-  .stats { display:flex; gap:28px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
-  .stats b { color:var(--ink); font-size:17px; font-weight:600; display:block;
-    font-family:Georgia,serif; }
-  .legend { font-size:11px; line-height:1.3; color:var(--muted); }
-  .legend .row { display:flex; align-items:center; gap:6px; margin:2px 0; }
-  .legend .swatch { width:22px; height:12px; display:inline-block; }
-  .leaflet-popup-content { font-size:12px; line-height:1.4; }
-  .leaflet-popup-content b { font-size:13px; }
-  .methodology { font-size:12px; color:var(--muted); line-height:1.5; }
-  .methodology summary { cursor:pointer; font-weight:600; color:var(--ink); font-size:13px; }
-  .methodology p { margin:8px 0; }
-  .speed { font-size:11px; color:var(--muted); }
-  select { font-size:12px; padding:3px 6px; }
-  .tick-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--muted);
-    margin-top:2px; padding:0 2px; }
-  .mode-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-    margin-top:12px; padding-top:12px; border-top:1px solid #eee; font-size:12px; }
-  .mode-row label { color:var(--muted); }
-  .tag-real { display:inline-block; font-size:9px; padding:1px 5px; border-radius:2px;
-    background:#333; color:#fff; vertical-align:middle; letter-spacing:0.02em;
-    text-transform:uppercase; font-weight:600; }
-  .tag-interp { display:inline-block; font-size:9px; padding:1px 5px; border-radius:2px;
-    background:#c8c3b5; color:#333; vertical-align:middle; letter-spacing:0.02em;
-    text-transform:uppercase; font-weight:600; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .serif { font-family: "Fraunces", Georgia, serif; font-feature-settings: "ss01"; }
+
+  /* Masthead */
+  .mast {
+    border-bottom: 1px solid var(--rule);
+    padding: 48px 24px 32px;
+  }
+  .mast-inner {
+    max-width: 1180px; margin: 0 auto;
+  }
+  .kicker {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin-bottom: 14px;
+  }
+  h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(34px, 4.8vw, 64px);
+    line-height: 1.02; letter-spacing: -0.02em; font-weight: 500;
+    margin: 0 0 16px; max-width: 14ch;
+  }
+  h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .dek {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: clamp(16px, 1.6vw, 20px); line-height: 1.45;
+    color: var(--ink-soft); max-width: 62ch; margin: 0;
+    font-weight: 400;
+  }
+
+  /* Main grid */
+  main {
+    max-width: 1180px; margin: 0 auto; padding: 28px 24px 64px;
+    display: grid; gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 960px) {
+    main { grid-template-columns: minmax(0, 1fr) 300px; }
+  }
+
+  /* Comparison bar */
+  .bar {
+    grid-column: 1 / -1;
+    background: var(--paper); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 16px 18px;
+  }
+  .bar-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .bar-row + .bar-row { margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--rule); }
+  .bar-label {
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin-right: 4px; min-width: 82px;
+  }
+  .chip {
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    padding: 6px 11px; border-radius: 999px; border: 1px solid var(--rule);
+    background: #fff; color: var(--ink-soft); cursor: pointer;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+  }
+  .chip:hover { background: #f0ebdd; }
+  .chip.on {
+    background: var(--ink); color: var(--paper); border-color: var(--ink);
+  }
+  .chip.year-chip.on { background: var(--accent); border-color: var(--accent); }
+
+  /* Map card */
+  .map-card {
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 6px;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .map-hed {
+    padding: 14px 18px 10px; border-bottom: 1px solid var(--rule);
+  }
+  .map-title {
+    font-family: "Fraunces", serif; font-size: 22px; line-height: 1.15;
+    font-weight: 500; letter-spacing: -0.01em; margin: 0;
+  }
+  .map-title .from { color: var(--muted); font-weight: 400; font-style: italic; }
+  .map-title .arrow { color: var(--muted); margin: 0 6px; }
+  .map-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  #map { height: 640px; }
+  .legend-bar {
+    padding: 10px 18px; border-top: 1px solid var(--rule);
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    font-size: 11px; color: var(--muted);
+  }
+  .leg { display: flex; gap: 3px; align-items: center; }
+  .leg .sw {
+    width: 20px; height: 10px; display: inline-block; border-radius: 1px;
+  }
+
+  /* Side rail */
+  .rail { display: flex; flex-direction: column; gap: 16px; }
+  .card {
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .card-hed {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin-bottom: 10px;
+  }
+  .big-num {
+    font-family: "Fraunces", serif; font-size: 34px; line-height: 1; font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+  .big-num .delta { font-size: 15px; vertical-align: 4px; margin-left: 6px; }
+  .delta-pos { color: var(--gain); }
+  .delta-neg { color: var(--loss); }
+  .sub-num { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .row-list {
+    list-style: none; margin: 0; padding: 0; font-size: 12px;
+  }
+  .row-list li {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 5px 0; border-bottom: 1px solid var(--rule);
+  }
+  .row-list li:last-child { border-bottom: none; }
+  .row-list .geo { color: var(--ink-soft); font-weight: 500; }
+  .row-list .val { font-family: "Fraunces", serif; font-weight: 500; }
+
+  /* Methodology */
+  .method {
+    grid-column: 1 / -1;
+    font-size: 13px; line-height: 1.55; color: var(--ink-soft);
+  }
+  .method summary {
+    cursor: pointer; font-weight: 600; color: var(--ink);
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 12px 0; border-top: 1px solid var(--rule);
+    list-style: none;
+  }
+  .method summary::marker { display: none; }
+  .method summary::-webkit-details-marker { display: none; }
+  .method summary::after { content: "+"; float: right; font-size: 16px; font-weight: 400; }
+  .method[open] summary::after { content: "–"; }
+  .method p { margin: 10px 0; max-width: 72ch; }
+
+  /* Leaflet overrides */
+  .leaflet-container { background: var(--paper); font-family: inherit; }
+  .leaflet-popup-content-wrapper {
+    background: var(--paper); color: var(--ink);
+    border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    border: 1px solid var(--rule);
+  }
+  .leaflet-popup-tip { background: var(--paper); border: 1px solid var(--rule); }
+  .leaflet-popup-content { font-size: 12px; line-height: 1.5; margin: 12px 14px; }
+  .leaflet-popup-content b { font-family: "Fraunces", serif; font-weight: 500; }
+
+  /* Scrub slider (compact, de-emphasized) */
+  .scrub {
+    display: flex; gap: 10px; align-items: center;
+    font-size: 11px; color: var(--muted);
+    margin-top: 4px;
+  }
+  .scrub input[type=range] { flex: 1; }
+  .year-tag {
+    display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 2px;
+    background: var(--ink); color: var(--paper); letter-spacing: 0.04em;
+    text-transform: uppercase; font-weight: 600; vertical-align: middle;
+  }
+  .year-tag.interp { background: #cbc5b3; color: var(--ink-soft); }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>NYC-area child density, 1970 to 2023</h1>
-  <div class="sub">Children under 18 per square mile by census tract, across the five boroughs
-    plus every bordering county in New York and New Jersey. Decennial census anchors plus ACS
-    5-year estimates from 2011 to 2023. Toggle between absolute density and change from a chosen
-    baseline year.</div>
-</header>
+<div class="mast">
+  <div class="mast-inner">
+    <div class="kicker">A children's geography of New York</div>
+    <h1>Where the <em>children</em> went,<br>1970 to 2023</h1>
+    <p class="dek">The five boroughs plus every bordering county in New York and New Jersey have
+      lost roughly 845,000 children under 18 since 1970. But the losses aren't evenly distributed,
+      and in a handful of neighborhoods the child population has more than doubled. Pan the map to
+      see where — and compare any two years below.</p>
+  </div>
+</div>
 
 <main>
-  <div class="panel">
-    <div class="controls">
-      <div class="year-display" id="year">1970</div>
-      <div class="slider-wrap">
-        <input type="range" id="slider" min="1970" max="2023" step="1" value="1970">
-        <div class="tick-labels">
-          <span>1970</span><span>1980</span><span>1990</span>
-          <span>2000</span><span>2010</span><span>2020</span>
-        </div>
-      </div>
-      <button id="play">Play</button>
-      <label class="speed">Speed
-        <select id="speed">
-          <option value="180">Slow</option>
-          <option value="90" selected>Normal</option>
-          <option value="40">Fast</option>
-        </select>
-      </label>
+
+  <div class="bar">
+    <div class="bar-row">
+      <span class="bar-label">Compare</span>
+      <button class="chip on" data-preset="1970,2023">1970 vs 2023</button>
+      <button class="chip" data-preset="1970,1990">1970 vs 1990</button>
+      <button class="chip" data-preset="1990,2023">1990 vs 2023</button>
+      <button class="chip" data-preset="2000,2023">2000 vs 2023</button>
+      <button class="chip" data-preset="2010,2023">2010 vs 2023</button>
+      <span style="flex:1"></span>
+      <button class="chip" id="mode-snapshot">Single-year snapshot</button>
     </div>
-    <div class="mode-row">
-      <span style="font-weight:600;color:var(--ink);">View:</span>
-      <button id="mode-density" class="ghost on">Density</button>
-      <button id="mode-delta" class="ghost">Change from baseline</button>
-      <span id="baseline-picker" style="display:none;">
-        <label>Baseline year
-          <select id="baseline">
-            <option value="1970" selected>1970</option>
-            <option value="1980">1980</option>
-            <option value="1990">1990</option>
-            <option value="2000">2000</option>
-            <option value="2010">2010</option>
-          </select>
-        </label>
+    <div class="bar-row" id="custom-row">
+      <span class="bar-label">Custom</span>
+      <span style="font-size:12px; color: var(--muted);">from</span>
+      <select class="chip" id="from-year"></select>
+      <span style="font-size:12px; color: var(--muted);">to</span>
+      <select class="chip" id="to-year"></select>
+      <span style="flex:1"></span>
+      <span class="scrub" id="scrub-wrap" style="flex-basis:260px;">
+        <span>Scrub</span>
+        <input type="range" id="scrub" min="1970" max="2023" step="1" value="2023">
       </span>
     </div>
   </div>
 
-  <div class="panel">
-    <div class="stats" id="stats"></div>
-  </div>
-
-  <div class="panel" style="padding:0; overflow:hidden;">
+  <div class="map-card">
+    <div class="map-hed">
+      <h2 class="map-title" id="map-title">
+        <span class="from">1970</span><span class="arrow">→</span><span>2023</span>
+      </h2>
+      <div class="map-sub" id="map-sub">Change in children per square mile, by 2010 census tract.
+        Red = gain, blue = loss, white = within ±10%.</div>
+    </div>
     <div id="map"></div>
+    <div class="legend-bar" id="legend"></div>
   </div>
 
-  <div class="panel">
-    <div class="legend" id="legend"></div>
-  </div>
+  <aside class="rail">
+    <div class="card">
+      <div class="card-hed">Total children under 18</div>
+      <div id="totals"></div>
+    </div>
+    <div class="card">
+      <div class="card-hed">Biggest gainers <span id="gainers-hed-range" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400;"></span></div>
+      <ol class="row-list" id="gainers"></ol>
+    </div>
+    <div class="card">
+      <div class="card-hed">Biggest losers <span id="losers-hed-range" style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:400;"></span></div>
+      <ol class="row-list" id="losers"></ol>
+    </div>
+  </aside>
 
-  <div class="panel">
-    <details class="methodology">
-      <summary>Methodology and limitations</summary>
-      <p><b>Data sources.</b> Decennial census counts of persons under 18 (table D08)
-      from IPUMS NHGIS for 1970, 1980, 1990, 2000, 2010, 2020. American Community Survey
-      5-year estimates (table B01001, sex-by-age) from the U.S. Census Bureau for endyears
-      2011 through 2023. Each year between 2011 and 2023 is a real ACS measurement, not
-      an interpolation.</p>
-      <p><b>Geography.</b> Tracts are rendered on 2010 census tract boundaries. NHGIS
-      decennial values join by nominal tract code; ACS values join by exact GEOID. Between
-      decade anchors before 2011, annual values are linearly interpolated.</p>
-      <p><b>Area.</b> Study area is the five boroughs of New York City plus every county
-      sharing a land or water border: Westchester and Nassau (NY); Bergen, Hudson, Union,
-      and Middlesex (NJ). Land area is computed in EPSG:2263 (NY State Plane, Long Island)
-      and tracts smaller than 0.005 sq mi are excluded.</p>
-      <p><b>Delta view.</b> "Change from baseline" shows percentage change in density from
-      the selected baseline year. Red shades = more kids per sq mi than the baseline; blue
-      shades = fewer. White = roughly unchanged (plus or minus 10 percent).</p>
-      <p><b>Known limitations.</b> (1) Nominal tract-code matching for NHGIS can flicker when
-      tracts are redrawn between decades; true population-weighted normalization is a future
-      enhancement. (2) ACS 5-year estimates have margins of error - tract-level values
-      carry real uncertainty. (3) ACS endyears 2020-2023 use 2020 tract boundaries; where
-      a 2020 tract GEOID differs from its 2010 counterpart, the 2010 tract holds its
-      pre-2020 value and the delta reflects that limitation.</p>
-    </details>
-  </div>
+  <details class="method">
+    <summary>Methodology</summary>
+    <p><b>Data.</b> Decennial census counts of persons under 18 (NHGIS time-series table D08,
+      "Persons by Age: Children and Adults") for 1970, 1980, 1990, 2000, 2010, and 2020. American
+      Community Survey 5-year estimates (B01001, sex by age) for endyears 2011 through 2023. Each
+      year between 2011 and 2023 is a measured ACS estimate, not an interpolation. Pre-2011 years
+      between decennial anchors are linearly interpolated.</p>
+    <p><b>Geography.</b> The study area is the five boroughs of New York City plus every county
+      sharing a land or water border with NYC: Westchester and Nassau (NY); Bergen, Hudson, Union,
+      and Middlesex (NJ). Tracts are rendered on 2010 census tract boundaries. NHGIS decennial
+      values join by nominal tract code; ACS values join by exact GEOID. A future iteration may
+      normalize earlier decades to 2010 boundaries using NHGIS population-weighted crosswalks.</p>
+    <p><b>Density.</b> Children per square mile = count ÷ land area in sq mi. Land area is
+      computed from 2010 TIGER cartographic boundaries projected to EPSG:2263 (NY State Plane,
+      Long Island, survey feet). Tracts under 0.005 sq mi (airports, parks, water) are excluded.</p>
+    <p><b>Change calculation.</b> Percent change in density between the "from" and "to" year for
+      each tract. Tracts with zero baseline density show no color.</p>
+    <p><b>Caveats.</b> (1) Nominal tract-code matching for NHGIS decennial data can produce
+      artifacts where tracts were redrawn. (2) ACS 5-year estimates carry margins of error at the
+      tract level; ranked lists should be read as order-of-magnitude. (3) Tract GEOIDs for ACS
+      endyears 2020 through 2023 use 2020 boundaries; where a GEOID changed between 2010 and 2020
+      the pre-2020 ACS value is held and delta values may understate change.</p>
+    <p><b>Sources.</b> U.S. Census Bureau via api.census.gov. IPUMS NHGIS, University of Minnesota:
+      Schroeder, J., Van Riper, D., Manson, S., et al. IPUMS National Historical Geographic
+      Information System, version 20.0. Minneapolis: IPUMS. 2025.
+      <a href="https://doi.org/10.18128/D050.V20.0">doi.org/10.18128/D050.V20.0</a>.
+      Source code:
+      <a href="https://github.com/joshgreenman1973/nyc-child-density">github.com/joshgreenman1973/nyc-child-density</a>.</p>
+  </details>
+
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-let TS = null, COUNTS = null, BASE = null, SUMMARY = null;
+// ---------- data ----------
 const YEAR_MIN = 1970, YEAR_MAX = 2023;
+let BASE = null, TS = null, COUNTS = null, SUMMARY = null;
 
-// Density breaks (absolute mode)
-const DENSITY_BREAKS = [0, 2000, 5000, 10000, 20000, 35000, 60000];
-const DENSITY_COLORS = ["#f5f0e4", "#fde0a6", "#f7b267", "#f07b3f", "#d94a1f", "#8c1d04"];
+// Absolute density palette (sequential, warm)
+const D_BREAKS = [0, 2000, 5000, 10000, 20000, 35000, 60000];
+const D_COLORS = ["#efe8d4", "#f6d79a", "#efa86a", "#d97742", "#b84c27", "#7d1c0a"];
 
-// Delta breaks (change from baseline, percent)
-// diverging scale: blue = loss of kids, red = gain
-const DELTA_BREAKS = [-80, -50, -25, -10, 10, 25, 50, 100, 1000000];
-const DELTA_COLORS = ["#2166ac","#4393c3","#92c5de","#d1e5f0","#f7f5f0","#fddbc7","#f4a582","#d6604d","#b2182b"];
-
-let mode = "density"; // or "delta"
+// Delta palette (diverging, muted)
+const DELTA_STOPS = [
+  { lt: -75, c: "#2a5a85" },
+  { lt: -50, c: "#457ba8" },
+  { lt: -25, c: "#7ea8cc" },
+  { lt: -10, c: "#c1d5e4" },
+  { lt:  10, c: "#f4efdf" },   // neutral band
+  { lt:  25, c: "#e9c2a8" },
+  { lt:  50, c: "#d48966" },
+  { lt: 100, c: "#a8492b" },
+  { lt:  1e9,c: "#6e1e0b" },
+];
 
 function colorDensity(d) {
-  if (!d || d <= 0) return "#eae6da";
-  for (let i = DENSITY_BREAKS.length - 1; i >= 0; i--) {
-    if (d >= DENSITY_BREAKS[i]) return DENSITY_COLORS[Math.min(i, DENSITY_COLORS.length - 1)];
+  if (!d || d <= 0) return "#eee7d4";
+  for (let i = D_BREAKS.length - 1; i >= 0; i--) {
+    if (d >= D_BREAKS[i]) return D_COLORS[Math.min(i, D_COLORS.length - 1)];
   }
-  return DENSITY_COLORS[0];
+  return D_COLORS[0];
 }
 function colorDelta(pct) {
-  if (pct === null || pct === undefined || !isFinite(pct)) return "#eae6da";
-  for (let i = 0; i < DELTA_BREAKS.length - 1; i++) {
-    if (pct < DELTA_BREAKS[i + 1]) return DELTA_COLORS[i];
-  }
-  return DELTA_COLORS[DELTA_COLORS.length - 1];
+  if (pct === null || !isFinite(pct)) return "#eee7d4";
+  for (const s of DELTA_STOPS) if (pct < s.lt) return s.c;
+  return DELTA_STOPS[DELTA_STOPS.length - 1].c;
 }
 
-const map = L.map("map", { zoomControl:true, preferCanvas:true })
+function densityAt(gj, y) { return TS.tracts[gj] ? TS.tracts[gj][y - YEAR_MIN] : 0; }
+function countAt(gj, y)   { return COUNTS.tracts[gj] ? COUNTS.tracts[gj][y - YEAR_MIN] : 0; }
+function isReal(y) { return SUMMARY.real_anchor_years.includes(y); }
+
+// ---------- state ----------
+let state = { mode: "delta", from: 1970, to: 2023 }; // mode = "delta" or "snapshot"
+
+// ---------- map ----------
+const map = L.map("map", { zoomControl: true, preferCanvas: true })
   .setView([40.78, -73.95], 10);
 L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png", {
-  attribution:"&copy; OpenStreetMap &copy; CARTO",
-  subdomains:"abcd", maxZoom:18,
+  attribution: "&copy; OpenStreetMap &copy; CARTO",
+  subdomains: "abcd", maxZoom: 18,
 }).addTo(map);
 L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png", {
-  subdomains:"abcd", maxZoom:18, pane:"shadowPane",
+  subdomains: "abcd", maxZoom: 18, pane: "shadowPane",
 }).addTo(map);
 
-let layer = null;
-const layerByGisjoin = new Map();
-
+const layerByGj = new Map();
 function buildLayer() {
-  layer = L.geoJSON(BASE, {
-    style: () => ({ color:"#fff", weight:0.3, fillOpacity:0.85, fillColor:"#eae6da" }),
+  L.geoJSON(BASE, {
+    style: () => ({ color: "#fff", weight: 0.25, fillOpacity: 0.9, fillColor: "#eee7d4" }),
     onEachFeature: (f, l) => {
-      layerByGisjoin.set(f.properties.gisjoin, l);
-      l.on("click", () => {
-        const yr = +document.getElementById("slider").value;
-        const density = densityAt(f.properties.gisjoin, yr);
-        const kids = Math.round(density * f.properties.land_sqmi);
-        const tag = isRealYear(yr) ? "measured" : "interpolated";
-        let html = `<b>${f.properties.geoid}</b><br>`
-          + `Year: <b>${yr}</b> <span class="tag-${tag==='measured'?'real':'interp'}">${tag}</span><br>`
-          + `Density: <b>${density.toLocaleString()}</b> kids / sq mi<br>`
-          + `Estimated children: ${kids.toLocaleString()}<br>`
-          + `Land area: ${f.properties.land_sqmi.toFixed(2)} sq mi`;
-        if (mode === "delta") {
-          const base = +document.getElementById("baseline").value;
-          const baseD = densityAt(f.properties.gisjoin, base);
-          const pct = baseD > 0 ? ((density - baseD) / baseD) * 100 : null;
-          html += `<hr style="margin:6px 0;border:none;border-top:1px solid #eee;">`
-            + `Baseline ${base}: ${baseD.toLocaleString()} kids / sq mi<br>`
-            + `Change: <b>${pct === null ? "-" : (pct > 0 ? "+" : "") + pct.toFixed(1) + "%"}</b>`;
-        }
-        l.bindPopup(html).openPopup();
-      });
+      layerByGj.set(f.properties.gisjoin, l);
+      l.on("click", () => l.bindPopup(popup(f)).openPopup());
+      l.on("mouseover", () => l.setStyle({ weight: 1.5, color: "#1a1915" }));
+      l.on("mouseout", () => l.setStyle({ weight: 0.25, color: "#fff" }));
     },
   }).addTo(map);
 }
 
-function densityAt(gj, year) {
-  const s = TS.tracts[gj];
-  return s ? s[year - YEAR_MIN] : 0;
-}
-function isRealYear(y) {
-  return SUMMARY.real_anchor_years.includes(y);
+function popup(f) {
+  const gj = f.properties.gisjoin;
+  const area = f.properties.land_sqmi;
+  if (state.mode === "snapshot") {
+    const y = state.to;
+    const d = densityAt(gj, y), k = countAt(gj, y);
+    return `<b>Tract ${f.properties.geoid}</b><br>
+      Year: ${y} <span class="year-tag${isReal(y) ? "" : " interp"}">${isReal(y) ? "measured" : "interpolated"}</span><br>
+      Density: <b>${Math.round(d).toLocaleString()}</b> kids / sq mi<br>
+      Children: ${Math.round(k).toLocaleString()}<br>
+      Land area: ${area.toFixed(2)} sq mi`;
+  }
+  const d0 = densityAt(gj, state.from), d1 = densityAt(gj, state.to);
+  const k0 = countAt(gj, state.from), k1 = countAt(gj, state.to);
+  const pct = d0 > 0 ? ((d1 - d0) / d0) * 100 : null;
+  const signed = (n) => (n > 0 ? "+" : "") + n.toLocaleString();
+  return `<b>Tract ${f.properties.geoid}</b><br>
+    <span style="color:var(--muted)">${state.from}:</span> ${Math.round(k0).toLocaleString()} kids @ ${Math.round(d0).toLocaleString()}/sq mi<br>
+    <span style="color:var(--muted)">${state.to}:</span> ${Math.round(k1).toLocaleString()} kids @ ${Math.round(d1).toLocaleString()}/sq mi<br>
+    <b style="font-size:13px;color:${pct == null ? "var(--muted)" : (pct > 0 ? "var(--gain)" : "var(--loss)")}">
+      ${pct == null ? "-" : signed(Math.round(pct)) + "%"} density
+    </b>, ${signed(Math.round(k1 - k0))} kids`;
 }
 
-function renderYear(year) {
-  document.getElementById("year").textContent = year;
-  const base = +document.getElementById("baseline").value;
-
-  layerByGisjoin.forEach((l, gj) => {
-    const d = densityAt(gj, year);
+// ---------- render ----------
+function render() {
+  const { mode, from, to } = state;
+  // Map styles
+  layerByGj.forEach((l, gj) => {
     let fill;
-    if (mode === "density") {
-      fill = colorDensity(d);
+    if (mode === "snapshot") {
+      fill = colorDensity(densityAt(gj, to));
     } else {
-      const b = densityAt(gj, base);
-      if (b <= 0) { fill = "#eae6da"; }
-      else {
-        const pct = ((d - b) / b) * 100;
-        fill = colorDelta(pct);
-      }
+      const d0 = densityAt(gj, from), d1 = densityAt(gj, to);
+      const pct = d0 > 0 ? ((d1 - d0) / d0) * 100 : null;
+      fill = colorDelta(pct);
     }
-    l.setStyle({ fillColor: fill, color:"#fff", weight:0.3, fillOpacity:0.85 });
+    l.setStyle({ fillColor: fill, color: "#fff", weight: 0.25, fillOpacity: 0.9 });
   });
 
-  const total = SUMMARY.total[year];
-  const peak = SUMMARY.peak_density[year];
-  const realTag = isRealYear(year)
-    ? '<span class="tag-real">measured</span>'
-    : '<span class="tag-interp">interpolated</span>';
-  let statHtml = `
-    <div><b>${total.toLocaleString()}</b>Est. children under 18</div>
-    <div><b>${peak.toLocaleString()}</b>Peak tract density (kids/sq mi)</div>
-    <div><b>${year} ${realTag}</b>&nbsp;</div>
-  `;
-  if (mode === "delta") {
-    const deltaTotal = total - SUMMARY.total[base];
-    const deltaPct = SUMMARY.total[base] > 0
-      ? (deltaTotal / SUMMARY.total[base]) * 100 : 0;
-    statHtml += `<div><b>${(deltaTotal > 0 ? "+" : "") + deltaTotal.toLocaleString()}</b>Change vs ${base} (${deltaPct.toFixed(1)}%)</div>`;
+  // Title
+  const title = document.getElementById("map-title");
+  const sub = document.getElementById("map-sub");
+  if (mode === "snapshot") {
+    title.innerHTML = `Children per square mile, <span class="from">${to}</span>`;
+    sub.textContent = `Absolute density of children under 18, by 2010 census tract. ${isReal(to) ? "Measured" : "Interpolated"} year.`;
+  } else {
+    title.innerHTML = `<span class="from">${from}</span><span class="arrow">→</span><span>${to}</span>`;
+    sub.textContent = `Change in children per square mile, by 2010 census tract. Red = gain, blue = loss, white = within ±10%.`;
   }
-  document.getElementById("stats").innerHTML = statHtml;
+
+  renderTotals();
+  renderRanked();
+  renderLegend();
 }
 
-function buildLegend() {
+function renderTotals() {
+  const { mode, from, to } = state;
+  const wrap = document.getElementById("totals");
+  if (mode === "snapshot") {
+    wrap.innerHTML = `
+      <div class="big-num">${SUMMARY.total[to].toLocaleString()}</div>
+      <div class="sub-num">${to} · ${isReal(to) ? "measured" : "interpolated"}</div>`;
+    return;
+  }
+  const t0 = SUMMARY.total[from], t1 = SUMMARY.total[to];
+  const delta = t1 - t0;
+  const pct = t0 > 0 ? (delta / t0) * 100 : 0;
+  const cls = delta >= 0 ? "delta-pos" : "delta-neg";
+  wrap.innerHTML = `
+    <div class="big-num">${t1.toLocaleString()}
+      <span class="delta ${cls}">${delta >= 0 ? "+" : ""}${delta.toLocaleString()}</span>
+    </div>
+    <div class="sub-num">${to} total, ${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% vs ${from} (${t0.toLocaleString()})</div>`;
+}
+
+function renderRanked() {
+  const { mode, from, to } = state;
+  const gainers = document.getElementById("gainers");
+  const losers = document.getElementById("losers");
+  const gHed = document.getElementById("gainers-hed-range");
+  const lHed = document.getElementById("losers-hed-range");
+
+  if (mode === "snapshot") {
+    gHed.textContent = ` (${to})`;
+    lHed.textContent = ` (${to})`;
+    // For snapshot: top density tracts vs bottom (among populated)
+    const ranked = [];
+    BASE.features.forEach(f => {
+      const gj = f.properties.gisjoin;
+      const d = densityAt(gj, to);
+      const k = countAt(gj, to);
+      ranked.push({ f, d, k });
+    });
+    const top = [...ranked].sort((a, b) => b.d - a.d).slice(0, 6);
+    gHed.textContent = " (highest density)";
+    lHed.textContent = " (lowest density, populated)";
+    const withKids = ranked.filter(r => r.k > 20).sort((a, b) => a.d - b.d).slice(0, 6);
+    gainers.innerHTML = top.map(r =>
+      `<li><span class="geo">${label(r.f)}</span><span class="val">${Math.round(r.d).toLocaleString()}</span></li>`
+    ).join("");
+    losers.innerHTML = withKids.map(r =>
+      `<li><span class="geo">${label(r.f)}</span><span class="val">${Math.round(r.d).toLocaleString()}</span></li>`
+    ).join("");
+    return;
+  }
+
+  gHed.textContent = ` (${from}→${to})`;
+  lHed.textContent = ` (${from}→${to})`;
+  const ranked = [];
+  BASE.features.forEach(f => {
+    const gj = f.properties.gisjoin;
+    const d0 = densityAt(gj, from), d1 = densityAt(gj, to);
+    const k0 = countAt(gj, from), k1 = countAt(gj, to);
+    if (d0 < 500 || k0 < 50) return; // require meaningful baseline
+    const pct = ((d1 - d0) / d0) * 100;
+    ranked.push({ f, pct, k0, k1 });
+  });
+  const gain = [...ranked].sort((a, b) => b.pct - a.pct).slice(0, 6);
+  const loss = [...ranked].sort((a, b) => a.pct - b.pct).slice(0, 6);
+  gainers.innerHTML = gain.map(r =>
+    `<li><span class="geo">${label(r.f)}</span><span class="val delta-pos">+${Math.round(r.pct)}%</span></li>`
+  ).join("");
+  losers.innerHTML = loss.map(r =>
+    `<li><span class="geo">${label(r.f)}</span><span class="val delta-neg">${Math.round(r.pct)}%</span></li>`
+  ).join("");
+}
+
+function label(f) {
+  // short label: last 6 digits of geoid = tract number, plus county abbrev
+  const geoid = f.properties.geoid;
+  const state = geoid.slice(0, 2), county = geoid.slice(2, 5);
+  const tract = geoid.slice(5);
+  const tractNum = (parseInt(tract) / 100).toFixed(2).replace(/\.00$/, "");
+  const cn = COUNTY_NAMES[state + county] || "";
+  return `${cn} · Tract ${tractNum}`;
+}
+const COUNTY_NAMES = {
+  "36005":"Bronx","36047":"Brooklyn","36061":"Manhattan","36081":"Queens","36085":"Staten Island",
+  "36119":"Westchester","36059":"Nassau",
+  "34003":"Bergen","34017":"Hudson","34039":"Union","34023":"Middlesex",
+};
+
+function renderLegend() {
   const el = document.getElementById("legend");
-  if (mode === "density") {
-    let html = "<div style='font-weight:600;color:var(--ink);margin-bottom:4px;'>Children per square mile</div>";
-    for (let i = DENSITY_BREAKS.length - 1; i >= 0; i--) {
-      const lo = DENSITY_BREAKS[i];
-      const hi = DENSITY_BREAKS[i + 1];
-      const label = hi ? `${lo.toLocaleString()} - ${hi.toLocaleString()}` : `${lo.toLocaleString()}+`;
-      html += `<div class="row"><span class="swatch" style="background:${DENSITY_COLORS[Math.min(i, DENSITY_COLORS.length-1)]}"></span>${label}</div>`;
+  if (state.mode === "snapshot") {
+    let html = `<span class="leg"><b style="color:var(--ink);font-family:'Fraunces',serif;font-weight:500;margin-right:4px;">Children / sq mi</b></span>`;
+    for (let i = 0; i < D_BREAKS.length; i++) {
+      const hi = D_BREAKS[i + 1];
+      const lbl = hi ? `${(D_BREAKS[i]/1000).toFixed(0)}k` : `${(D_BREAKS[i]/1000).toFixed(0)}k+`;
+      html += `<span class="leg"><span class="sw" style="background:${D_COLORS[Math.min(i, D_COLORS.length-1)]}"></span>${lbl}</span>`;
     }
-    html += `<div class="row"><span class="swatch" style="background:#eae6da"></span>No data / excluded</div>`;
     el.innerHTML = html;
   } else {
-    const labels = [
-      "Loss of 50% or more",
-      "Loss of 25 to 50%",
-      "Loss of 10 to 25%",
-      "Roughly unchanged (plus or minus 10%)",
-      "Gain of 10 to 25%",
-      "Gain of 25 to 50%",
-      "Gain of 50 to 100%",
-      "Gain of 100%+",
-    ];
-    const colors = ["#4393c3","#92c5de","#d1e5f0","#f7f5f0","#fddbc7","#f4a582","#d6604d","#b2182b"];
-    let html = `<div style='font-weight:600;color:var(--ink);margin-bottom:4px;'>Change in child density vs baseline</div>`;
-    for (let i = labels.length - 1; i >= 0; i--) {
-      html += `<div class="row"><span class="swatch" style="background:${colors[i]}"></span>${labels[i]}</div>`;
-    }
+    let html = `<span class="leg"><b style="color:var(--ink);font-family:'Fraunces',serif;font-weight:500;margin-right:4px;">Change in density</b></span>`;
+    const labels = ["-75%+","-75 to -50","-50 to -25","-25 to -10","±10%","+10 to +25","+25 to +50","+50 to +100","+100%+"];
+    DELTA_STOPS.forEach((s, i) => {
+      html += `<span class="leg"><span class="sw" style="background:${s.c}"></span>${labels[i]}</span>`;
+    });
     el.innerHTML = html;
   }
 }
 
-// Controls
-const slider = document.getElementById("slider");
-const btn = document.getElementById("play");
-const speedSel = document.getElementById("speed");
-const baselineSel = document.getElementById("baseline");
-const modeDensity = document.getElementById("mode-density");
-const modeDelta = document.getElementById("mode-delta");
-const baselinePicker = document.getElementById("baseline-picker");
-
-let playing = false, rafId = null, lastStep = 0;
-
-slider.addEventListener("input", () => renderYear(+slider.value));
-baselineSel.addEventListener("change", () => renderYear(+slider.value));
-
-function setMode(m) {
-  mode = m;
-  modeDensity.classList.toggle("on", m === "density");
-  modeDelta.classList.toggle("on", m === "delta");
-  baselinePicker.style.display = (m === "delta") ? "inline" : "none";
-  buildLegend();
-  renderYear(+slider.value);
+// ---------- controls ----------
+// Year dropdowns
+const ANCHOR_YEARS = [1970, 1980, 1990, 2000, 2010, 2015, 2020, 2023];
+function populateYears() {
+  const fy = document.getElementById("from-year");
+  const ty = document.getElementById("to-year");
+  for (const y of ANCHOR_YEARS) {
+    fy.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
+    ty.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
+  }
+  fy.value = "1970"; ty.value = "2023";
+  fy.addEventListener("change", () => { state.from = +fy.value; clearPresetHighlight(); render(); });
+  ty.addEventListener("change", () => { state.to = +ty.value; clearPresetHighlight(); render(); });
 }
-modeDensity.addEventListener("click", () => setMode("density"));
-modeDelta.addEventListener("click", () => setMode("delta"));
 
-btn.addEventListener("click", () => {
-  playing = !playing;
-  btn.textContent = playing ? "Pause" : "Play";
-  if (playing) {
-    if (+slider.value >= YEAR_MAX) slider.value = YEAR_MIN;
-    lastStep = 0;
-    rafId = requestAnimationFrame(tick);
-  } else if (rafId) cancelAnimationFrame(rafId);
+function clearPresetHighlight() {
+  document.querySelectorAll(".chip[data-preset]").forEach(c => c.classList.remove("on"));
+}
+
+document.querySelectorAll(".chip[data-preset]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const [f, t] = btn.dataset.preset.split(",").map(Number);
+    state.mode = "delta";
+    state.from = f; state.to = t;
+    document.getElementById("from-year").value = f;
+    document.getElementById("to-year").value = t;
+    document.getElementById("mode-snapshot").classList.remove("on");
+    clearPresetHighlight();
+    btn.classList.add("on");
+    render();
+  });
 });
 
-function tick(ts) {
-  if (!playing) return;
-  if (!lastStep) lastStep = ts;
-  const interval = +speedSel.value;
-  if (ts - lastStep >= interval) {
-    lastStep = ts;
-    let y = +slider.value + 1;
-    if (y > YEAR_MAX) { playing = false; btn.textContent = "Play"; return; }
-    slider.value = y;
-    renderYear(y);
+const snapBtn = document.getElementById("mode-snapshot");
+snapBtn.addEventListener("click", () => {
+  state.mode = state.mode === "snapshot" ? "delta" : "snapshot";
+  snapBtn.classList.toggle("on", state.mode === "snapshot");
+  if (state.mode === "delta") {
+    // restore highlight
+    const match = document.querySelector(`.chip[data-preset="${state.from},${state.to}"]`);
+    if (match) match.classList.add("on");
+  } else {
+    clearPresetHighlight();
   }
-  rafId = requestAnimationFrame(tick);
-}
+  render();
+});
 
+const scrub = document.getElementById("scrub");
+scrub.addEventListener("input", () => {
+  const y = +scrub.value;
+  if (state.mode === "snapshot") state.to = y;
+  else state.to = y;
+  document.getElementById("to-year").value = ANCHOR_YEARS.includes(y) ? y : "";
+  clearPresetHighlight();
+  render();
+});
+
+// ---------- boot ----------
 Promise.all([
   fetch("tracts_base.geojson").then(r => r.json()),
   fetch("density_timeseries.json").then(r => r.json()),
+  fetch("counts_timeseries.json").then(r => r.json()),
   fetch("summary.json").then(r => r.json()),
-]).then(([base, ts, summary]) => {
-  BASE = base; TS = ts; SUMMARY = summary;
+]).then(([base, ts, counts, summary]) => {
+  BASE = base; TS = ts; COUNTS = counts; SUMMARY = summary;
+  populateYears();
   buildLayer();
-  buildLegend();
-  renderYear(YEAR_MIN);
+  render();
+  // Update dek with real total
+  const lost = SUMMARY.total[1970] - SUMMARY.total[2023];
+  document.querySelector(".dek").innerHTML = document.querySelector(".dek").innerHTML
+    .replace("roughly 845,000", "<b>" + lost.toLocaleString() + "</b>");
 });
 </script>
 </body>
