@@ -73,24 +73,32 @@
     background: var(--paper); border: 1px solid var(--rule);
     border-radius: 6px; padding: 16px 18px;
   }
-  .bar-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .bar-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; row-gap: 8px; }
   .bar-row + .bar-row { margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--rule); }
   .bar-label {
     font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
     color: var(--muted); font-weight: 600; margin-right: 4px; min-width: 82px;
   }
+  .bar-sep {
+    width: 1px; align-self: stretch; background: var(--rule); margin: 2px 4px;
+  }
   .chip {
     font-family: inherit; font-size: 12px; font-weight: 500;
-    padding: 6px 11px; border-radius: 999px; border: 1px solid var(--rule);
+    padding: 6px 13px; border-radius: 999px; border: 1px solid var(--rule);
     background: #fff; color: var(--ink-soft); cursor: pointer;
     transition: all 0.12s ease;
     white-space: nowrap;
   }
+  .chip + .chip { margin-left: 0; }
   .chip:hover { background: #f0ebdd; }
   .chip.on {
     background: var(--ink); color: var(--paper); border-color: var(--ink);
   }
   .chip.year-chip.on { background: var(--accent); border-color: var(--accent); }
+  .chip.ghost:not(.on) {
+    background: transparent; border-style: dashed; color: var(--muted);
+  }
+  .chip.ghost:not(.on):hover { background: #f0ebdd; color: var(--ink-soft); border-style: solid; }
 
   /* Map card */
   .map-card {
@@ -235,7 +243,8 @@
         <button class="chip" data-preset="2000,2023">2000 vs 2023</button>
         <button class="chip" data-preset="2010,2023">2010 vs 2023</button>
         <span style="flex:1"></span>
-        <button class="chip" id="mode-snapshot">Single-year snapshot</button>
+        <span class="bar-sep"></span>
+        <button class="chip ghost" id="mode-snapshot">Single-year snapshot</button>
       </div>
       <div class="bar-row" id="custom-row">
         <span class="bar-label">Custom</span>
