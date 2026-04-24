@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NYC-area child density, 1970 to 2023</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root { --ink:#111; --muted:#666; --bg:#f7f5f0; --card:#fff; --accent:#c9472b; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,sans-serif; }
+  header { padding:20px 24px 12px; max-width:1100px; margin:0 auto; }
+  h1 { font-family:Georgia,"Times New Roman",serif; font-size:28px; margin:0 0 4px;
+    font-weight:600; letter-spacing:-0.01em; }
+  .sub { color:var(--muted); font-size:14px; max-width:800px; }
+  main { max-width:1100px; margin:0 auto; padding:0 24px 40px; }
+  .panel { background:var(--card); border:1px solid #e6e1d5; border-radius:4px;
+    padding:16px; margin-bottom:14px; }
+  #map { height:640px; border-radius:4px; }
+  .controls { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .year-display { font-family:Georgia,serif; font-size:48px; font-weight:600;
+    min-width:110px; color:var(--accent); line-height:1; }
+  .slider-wrap { flex:1; min-width:240px; position:relative; }
+  input[type=range] { width:100%; }
+  button { background:var(--ink); color:#fff; border:none; padding:8px 14px;
+    border-radius:3px; font-size:13px; cursor:pointer; font-weight:500; }
+  button:hover { background:#333; }
+  button.ghost { background:#fff; color:var(--ink); border:1px solid #ccc; }
+  button.ghost.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .stats { display:flex; gap:28px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
+  .stats b { color:var(--ink); font-size:17px; font-weight:600; display:block;
+    font-family:Georgia,serif; }
+  .legend { font-size:11px; line-height:1.3; color:var(--muted); }
+  .legend .row { display:flex; align-items:center; gap:6px; margin:2px 0; }
+  .legend .swatch { width:22px; height:12px; display:inline-block; }
+  .leaflet-popup-content { font-size:12px; line-height:1.4; }
+  .leaflet-popup-content b { font-size:13px; }
+  .methodology { font-size:12px; color:var(--muted); line-height:1.5; }
+  .methodology summary { cursor:pointer; font-weight:600; color:var(--ink); font-size:13px; }
+  .methodology p { margin:8px 0; }
+  .speed { font-size:11px; color:var(--muted); }
+  select { font-size:12px; padding:3px 6px; }
+  .tick-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--muted);
+    margin-top:2px; padding:0 2px; }
+  .mode-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    margin-top:12px; padding-top:12px; border-top:1px solid #eee; font-size:12px; }
+  .mode-row label { color:var(--muted); }
+  .tag-real { display:inline-block; font-size:9px; padding:1px 5px; border-radius:2px;
+    background:#333; color:#fff; vertical-align:middle; letter-spacing:0.02em;
+    text-transform:uppercase; font-weight:600; }
+  .tag-interp { display:inline-block; font-size:9px; padding:1px 5px; border-radius:2px;
+    background:#c8c3b5; color:#333; vertical-align:middle; letter-spacing:0.02em;
+    text-transform:uppercase; font-weight:600; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NYC-area child density, 1970 to 2023</h1>
+  <div class="sub">Children under 18 per square mile by census tract, across the five boroughs
+    plus every bordering county in New York and New Jersey. Decennial census anchors plus ACS
+    5-year estimates from 2011 to 2023. Toggle between absolute density and change from a chosen
+    baseline year.</div>
+</header>
+
+<main>
+  <div class="panel">
+    <div class="controls">
+      <div class="year-display" id="year">1970</div>
+      <div class="slider-wrap">
+        <input type="range" id="slider" min="1970" max="2023" step="1" value="1970">
+        <div class="tick-labels">
+          <span>1970</span><span>1980</span><span>1990</span>
+          <span>2000</span><span>2010</span><span>2020</span>
+        </div>
+      </div>
+      <button id="play">Play</button>
+      <label class="speed">Speed
+        <select id="speed">
+          <option value="180">Slow</option>
+          <option value="90" selected>Normal</option>
+          <option value="40">Fast</option>
+        </select>
+      </label>
+    </div>
+    <div class="mode-row">
+      <span style="font-weight:600;color:var(--ink);">View:</span>
+      <button id="mode-density" class="ghost on">Density</button>
+      <button id="mode-delta" class="ghost">Change from baseline</button>
+      <span id="baseline-picker" style="display:none;">
+        <label>Baseline year
+          <select id="baseline">
+            <option value="1970" selected>1970</option>
+            <option value="1980">1980</option>
+            <option value="1990">1990</option>
+            <option value="2000">2000</option>
+            <option value="2010">2010</option>
+          </select>
+        </label>
+      </span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <div class="panel" style="padding:0; overflow:hidden;">
+    <div id="map"></div>
+  </div>
+
+  <div class="panel">
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="panel">
+    <details class="methodology">
+      <summary>Methodology and limitations</summary>
+      <p><b>Data sources.</b> Decennial census counts of persons under 18 (table D08)
+      from IPUMS NHGIS for 1970, 1980, 1990, 2000, 2010, 2020. American Community Survey
+      5-year estimates (table B01001, sex-by-age) from the U.S. Census Bureau for endyears
+      2011 through 2023. Each year between 2011 and 2023 is a real ACS measurement, not
+      an interpolation.</p>
+      <p><b>Geography.</b> Tracts are rendered on 2010 census tract boundaries. NHGIS
+      decennial values join by nominal tract code; ACS values join by exact GEOID. Between
+      decade anchors before 2011, annual values are linearly interpolated.</p>
+      <p><b>Area.</b> Study area is the five boroughs of New York City plus every county
+      sharing a land or water border: Westchester and Nassau (NY); Bergen, Hudson, Union,
+      and Middlesex (NJ). Land area is computed in EPSG:2263 (NY State Plane, Long Island)
+      and tracts smaller than 0.005 sq mi are excluded.</p>
+      <p><b>Delta view.</b> "Change from baseline" shows percentage change in density from
+      the selected baseline year. Red shades = more kids per sq mi than the baseline; blue
+      shades = fewer. White = roughly unchanged (plus or minus 10 percent).</p>
+      <p><b>Known limitations.</b> (1) Nominal tract-code matching for NHGIS can flicker when
+      tracts are redrawn between decades; true population-weighted normalization is a future
+      enhancement. (2) ACS 5-year estimates have margins of error - tract-level values
+      carry real uncertainty. (3) ACS endyears 2020-2023 use 2020 tract boundaries; where
+      a 2020 tract GEOID differs from its 2010 counterpart, the 2010 tract holds its
+      pre-2020 value and the delta reflects that limitation.</p>
+    </details>
+  </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let TS = null, COUNTS = null, BASE = null, SUMMARY = null;
+const YEAR_MIN = 1970, YEAR_MAX = 2023;
+
+// Density breaks (absolute mode)
+const DENSITY_BREAKS = [0, 2000, 5000, 10000, 20000, 35000, 60000];
+const DENSITY_COLORS = ["#f5f0e4", "#fde0a6", "#f7b267", "#f07b3f", "#d94a1f", "#8c1d04"];
+
+// Delta breaks (change from baseline, percent)
+// diverging scale: blue = loss of kids, red = gain
+const DELTA_BREAKS = [-80, -50, -25, -10, 10, 25, 50, 100, 1000000];
+const DELTA_COLORS = ["#2166ac","#4393c3","#92c5de","#d1e5f0","#f7f5f0","#fddbc7","#f4a582","#d6604d","#b2182b"];
+
+let mode = "density"; // or "delta"
+
+function colorDensity(d) {
+  if (!d || d <= 0) return "#eae6da";
+  for (let i = DENSITY_BREAKS.length - 1; i >= 0; i--) {
+    if (d >= DENSITY_BREAKS[i]) return DENSITY_COLORS[Math.min(i, DENSITY_COLORS.length - 1)];
+  }
+  return DENSITY_COLORS[0];
+}
+function colorDelta(pct) {
+  if (pct === null || pct === undefined || !isFinite(pct)) return "#eae6da";
+  for (let i = 0; i < DELTA_BREAKS.length - 1; i++) {
+    if (pct < DELTA_BREAKS[i + 1]) return DELTA_COLORS[i];
+  }
+  return DELTA_COLORS[DELTA_COLORS.length - 1];
+}
+
+const map = L.map("map", { zoomControl:true, preferCanvas:true })
+  .setView([40.78, -73.95], 10);
+L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png", {
+  attribution:"&copy; OpenStreetMap &copy; CARTO",
+  subdomains:"abcd", maxZoom:18,
+}).addTo(map);
+L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png", {
+  subdomains:"abcd", maxZoom:18, pane:"shadowPane",
+}).addTo(map);
+
+let layer = null;
+const layerByGisjoin = new Map();
+
+function buildLayer() {
+  layer = L.geoJSON(BASE, {
+    style: () => ({ color:"#fff", weight:0.3, fillOpacity:0.85, fillColor:"#eae6da" }),
+    onEachFeature: (f, l) => {
+      layerByGisjoin.set(f.properties.gisjoin, l);
+      l.on("click", () => {
+        const yr = +document.getElementById("slider").value;
+        const density = densityAt(f.properties.gisjoin, yr);
+        const kids = Math.round(density * f.properties.land_sqmi);
+        const tag = isRealYear(yr) ? "measured" : "interpolated";
+        let html = `<b>${f.properties.geoid}</b><br>`
+          + `Year: <b>${yr}</b> <span class="tag-${tag==='measured'?'real':'interp'}">${tag}</span><br>`
+          + `Density: <b>${density.toLocaleString()}</b> kids / sq mi<br>`
+          + `Estimated children: ${kids.toLocaleString()}<br>`
+          + `Land area: ${f.properties.land_sqmi.toFixed(2)} sq mi`;
+        if (mode === "delta") {
+          const base = +document.getElementById("baseline").value;
+          const baseD = densityAt(f.properties.gisjoin, base);
+          const pct = baseD > 0 ? ((density - baseD) / baseD) * 100 : null;
+          html += `<hr style="margin:6px 0;border:none;border-top:1px solid #eee;">`
+            + `Baseline ${base}: ${baseD.toLocaleString()} kids / sq mi<br>`
+            + `Change: <b>${pct === null ? "-" : (pct > 0 ? "+" : "") + pct.toFixed(1) + "%"}</b>`;
+        }
+        l.bindPopup(html).openPopup();
+      });
+    },
+  }).addTo(map);
+}
+
+function densityAt(gj, year) {
+  const s = TS.tracts[gj];
+  return s ? s[year - YEAR_MIN] : 0;
+}
+function isRealYear(y) {
+  return SUMMARY.real_anchor_years.includes(y);
+}
+
+function renderYear(year) {
+  document.getElementById("year").textContent = year;
+  const base = +document.getElementById("baseline").value;
+
+  layerByGisjoin.forEach((l, gj) => {
+    const d = densityAt(gj, year);
+    let fill;
+    if (mode === "density") {
+      fill = colorDensity(d);
+    } else {
+      const b = densityAt(gj, base);
+      if (b <= 0) { fill = "#eae6da"; }
+      else {
+        const pct = ((d - b) / b) * 100;
+        fill = colorDelta(pct);
+      }
+    }
+    l.setStyle({ fillColor: fill, color:"#fff", weight:0.3, fillOpacity:0.85 });
+  });
+
+  const total = SUMMARY.total[year];
+  const peak = SUMMARY.peak_density[year];
+  const realTag = isRealYear(year)
+    ? '<span class="tag-real">measured</span>'
+    : '<span class="tag-interp">interpolated</span>';
+  let statHtml = `
+    <div><b>${total.toLocaleString()}</b>Est. children under 18</div>
+    <div><b>${peak.toLocaleString()}</b>Peak tract density (kids/sq mi)</div>
+    <div><b>${year} ${realTag}</b>&nbsp;</div>
+  `;
+  if (mode === "delta") {
+    const deltaTotal = total - SUMMARY.total[base];
+    const deltaPct = SUMMARY.total[base] > 0
+      ? (deltaTotal / SUMMARY.total[base]) * 100 : 0;
+    statHtml += `<div><b>${(deltaTotal > 0 ? "+" : "") + deltaTotal.toLocaleString()}</b>Change vs ${base} (${deltaPct.toFixed(1)}%)</div>`;
+  }
+  document.getElementById("stats").innerHTML = statHtml;
+}
+
+function buildLegend() {
+  const el = document.getElementById("legend");
+  if (mode === "density") {
+    let html = "<div style='font-weight:600;color:var(--ink);margin-bottom:4px;'>Children per square mile</div>";
+    for (let i = DENSITY_BREAKS.length - 1; i >= 0; i--) {
+      const lo = DENSITY_BREAKS[i];
+      const hi = DENSITY_BREAKS[i + 1];
+      const label = hi ? `${lo.toLocaleString()} - ${hi.toLocaleString()}` : `${lo.toLocaleString()}+`;
+      html += `<div class="row"><span class="swatch" style="background:${DENSITY_COLORS[Math.min(i, DENSITY_COLORS.length-1)]}"></span>${label}</div>`;
+    }
+    html += `<div class="row"><span class="swatch" style="background:#eae6da"></span>No data / excluded</div>`;
+    el.innerHTML = html;
+  } else {
+    const labels = [
+      "Loss of 50% or more",
+      "Loss of 25 to 50%",
+      "Loss of 10 to 25%",
+      "Roughly unchanged (plus or minus 10%)",
+      "Gain of 10 to 25%",
+      "Gain of 25 to 50%",
+      "Gain of 50 to 100%",
+      "Gain of 100%+",
+    ];
+    const colors = ["#4393c3","#92c5de","#d1e5f0","#f7f5f0","#fddbc7","#f4a582","#d6604d","#b2182b"];
+    let html = `<div style='font-weight:600;color:var(--ink);margin-bottom:4px;'>Change in child density vs baseline</div>`;
+    for (let i = labels.length - 1; i >= 0; i--) {
+      html += `<div class="row"><span class="swatch" style="background:${colors[i]}"></span>${labels[i]}</div>`;
+    }
+    el.innerHTML = html;
+  }
+}
+
+// Controls
+const slider = document.getElementById("slider");
+const btn = document.getElementById("play");
+const speedSel = document.getElementById("speed");
+const baselineSel = document.getElementById("baseline");
+const modeDensity = document.getElementById("mode-density");
+const modeDelta = document.getElementById("mode-delta");
+const baselinePicker = document.getElementById("baseline-picker");
+
+let playing = false, rafId = null, lastStep = 0;
+
+slider.addEventListener("input", () => renderYear(+slider.value));
+baselineSel.addEventListener("change", () => renderYear(+slider.value));
+
+function setMode(m) {
+  mode = m;
+  modeDensity.classList.toggle("on", m === "density");
+  modeDelta.classList.toggle("on", m === "delta");
+  baselinePicker.style.display = (m === "delta") ? "inline" : "none";
+  buildLegend();
+  renderYear(+slider.value);
+}
+modeDensity.addEventListener("click", () => setMode("density"));
+modeDelta.addEventListener("click", () => setMode("delta"));
+
+btn.addEventListener("click", () => {
+  playing = !playing;
+  btn.textContent = playing ? "Pause" : "Play";
+  if (playing) {
+    if (+slider.value >= YEAR_MAX) slider.value = YEAR_MIN;
+    lastStep = 0;
+    rafId = requestAnimationFrame(tick);
+  } else if (rafId) cancelAnimationFrame(rafId);
+});
+
+function tick(ts) {
+  if (!playing) return;
+  if (!lastStep) lastStep = ts;
+  const interval = +speedSel.value;
+  if (ts - lastStep >= interval) {
+    lastStep = ts;
+    let y = +slider.value + 1;
+    if (y > YEAR_MAX) { playing = false; btn.textContent = "Play"; return; }
+    slider.value = y;
+    renderYear(y);
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+Promise.all([
+  fetch("tracts_base.geojson").then(r => r.json()),
+  fetch("density_timeseries.json").then(r => r.json()),
+  fetch("summary.json").then(r => r.json()),
+]).then(([base, ts, summary]) => {
+  BASE = base; TS = ts; SUMMARY = summary;
+  buildLayer();
+  buildLegend();
+  renderYear(YEAR_MIN);
+});
+</script>
+</body>
+</html>
