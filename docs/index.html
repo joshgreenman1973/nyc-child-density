@@ -540,19 +540,25 @@ function totalAt(gj, y) {
   const arr = TOTALS.tracts[gj];
   return arr ? arr[y - SHARE_YEAR_MIN] : null;
 }
-// Share under 18 as a percentage (0-100) for a tract-year. null if no denom.
+// Share under 18 as a percentage (0-100) for a tract-year. null if denom is
+// below a sanity floor (cemeteries, parks, and other non-residential tract
+// polygons sometimes accumulate crosswalked children without a corresponding
+// residential population — e.g. Mt. Hebron Cemetery with 77 "kids" and 0
+// residents. Clamping prevents these from polluting aggregates or ranks.)
+const SHARE_POP_FLOOR = 50;
 function shareAt(gj, y) {
   const tot = totalAt(gj, y);
-  if (!tot || tot <= 0) return null;
+  if (!tot || tot < SHARE_POP_FLOOR) return null;
   return 100 * countAt(gj, y) / tot;
 }
-// Regional aggregate share for a given year (weighted by raw counts).
+// Regional aggregate share for a given year (weighted by raw counts). Uses the
+// same pop floor so cemetery/park artifacts don't bias the citywide number.
 function regionShareAt(y) {
   if (!TOTALS || y < SHARE_YEAR_MIN || y > YEAR_MAX) return null;
   let kids = 0, people = 0;
   for (const gj in TOTALS.tracts) {
     const t = totalAt(gj, y);
-    if (!t || t <= 0) continue;
+    if (!t || t < SHARE_POP_FLOOR) continue;
     kids += countAt(gj, y); people += t;
   }
   return people > 0 ? 100 * kids / people : null;
