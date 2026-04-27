@@ -107,6 +107,22 @@
   }
   .chip.ghost:not(.on):hover { background: #f0ebdd; color: var(--ink-soft); border-style: solid; }
 
+  /* Segmented mode toggle: visually fused pair so it reads as one control */
+  .mode-toggle {
+    display: inline-flex; border: 1px solid var(--ink); border-radius: 999px;
+    padding: 2px; background: #fff;
+  }
+  .mode-toggle .chip.mode-chip {
+    border: none; padding: 5px 14px; border-radius: 999px;
+    background: transparent; color: var(--ink-soft);
+  }
+  .mode-toggle .chip.mode-chip.on {
+    background: var(--ink); color: var(--paper);
+  }
+  .mode-toggle .chip.mode-chip:not(.on):hover {
+    background: #f0ebdd; color: var(--ink);
+  }
+
   /* Map card */
   .map-card {
     background: var(--paper); border: 1px solid var(--rule); border-radius: 6px;
@@ -345,26 +361,43 @@
         <span style="font-size:11px;color:var(--muted);" id="measure-note"></span>
       </div>
       <div class="bar-row">
-        <span class="bar-label">Compare</span>
-        <button class="chip on" data-preset="1970,2023">1970 vs 2023</button>
-        <button class="chip" data-preset="1970,1990">1970 vs 1990</button>
-        <button class="chip" data-preset="1990,2023">1990 vs 2023</button>
-        <button class="chip" data-preset="2000,2023">2000 vs 2023</button>
-        <button class="chip" data-preset="2010,2023">2010 vs 2023</button>
+        <span class="bar-label">View</span>
+        <span class="mode-toggle">
+          <button class="chip mode-chip on" data-mode="delta">Compare two years</button>
+          <button class="chip mode-chip" data-mode="snapshot">Single year</button>
+        </span>
         <span style="flex:1"></span>
-        <span class="bar-sep"></span>
-        <button class="chip ghost" id="mode-snapshot">Single-year snapshot</button>
+        <span style="font-size:11px;color:var(--muted)" id="mode-help">Map colors show <b style="color:var(--ink-soft);font-weight:600">change</b> in density between two years.</span>
       </div>
-      <div class="bar-row" id="custom-row">
-        <span class="bar-label">Custom</span>
-        <span style="font-size:12px; color: var(--muted);">from</span>
+
+      <!-- Delta-mode controls -->
+      <div class="bar-row mode-only-delta" id="delta-row">
+        <span class="bar-label">Years</span>
+        <button class="chip on" data-preset="1970,2023">1970 → 2023</button>
+        <button class="chip" data-preset="1970,1990">1970 → 1990</button>
+        <button class="chip" data-preset="1990,2023">1990 → 2023</button>
+        <button class="chip" data-preset="2000,2023">2000 → 2023</button>
+        <button class="chip" data-preset="2010,2023">2010 → 2023</button>
+        <span class="bar-sep"></span>
+        <span style="font-size:11px;color:var(--muted);">or pick</span>
         <select class="chip" id="from-year"></select>
-        <span style="font-size:12px; color: var(--muted);">to</span>
+        <span style="font-size:11px;color:var(--muted);">→</span>
         <select class="chip" id="to-year"></select>
         <span style="flex:1"></span>
-        <span class="scrub" id="scrub-wrap" style="flex-basis:260px;">
-          <span>Scrub</span>
+        <span class="scrub" style="flex-basis:240px;">
+          <span>Scrub end year</span>
           <input type="range" id="scrub" min="1970" max="2023" step="1" value="2023">
+        </span>
+      </div>
+
+      <!-- Snapshot-mode controls -->
+      <div class="bar-row mode-only-snap" id="snap-row" style="display:none">
+        <span class="bar-label">Year</span>
+        <select class="chip" id="snap-year"></select>
+        <span style="flex:1"></span>
+        <span class="scrub" style="flex-basis:240px;">
+          <span>Scrub year</span>
+          <input type="range" id="snap-scrub" min="1970" max="2023" step="1" value="2023">
         </span>
       </div>
     </div>
@@ -1274,11 +1307,14 @@ const ANCHOR_YEARS = [1970, 1980, 1990, 2000, 2010, 2015, 2020, 2023];
 function populateYears() {
   const fy = document.getElementById("from-year");
   const ty = document.getElementById("to-year");
+  const sy = document.getElementById("snap-year");
   for (const y of ANCHOR_YEARS) {
     fy.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
     ty.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
+    if (sy) sy.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
   }
   fy.value = "1970"; ty.value = "2023";
+  if (sy) sy.value = "2023";
   fy.addEventListener("change", () => { state.from = +fy.value; clearPresetHighlight(); render(); });
   ty.addEventListener("change", () => { state.to = +ty.value; clearPresetHighlight(); render(); });
 }
@@ -1290,12 +1326,12 @@ function clearPresetHighlight() {
 document.querySelectorAll(".chip[data-preset]").forEach(btn => {
   btn.addEventListener("click", () => {
     const [f, t] = btn.dataset.preset.split(",").map(Number);
-    state.mode = "delta";
     state.from = clampToBand(f);
     state.to = clampToBand(t);
     document.getElementById("from-year").value = state.from;
     document.getElementById("to-year").value = state.to;
-    document.getElementById("mode-snapshot").classList.remove("on");
+    document.getElementById("scrub").value = state.to;
+    if (state.mode !== "delta") applyMode("delta");
     clearPresetHighlight();
     btn.classList.add("on");
     render();
@@ -1326,7 +1362,6 @@ document.querySelectorAll(".chip.age-chip").forEach(btn => {
     // — share-under-18 is only meaningful for the whole under-18 group.
     // Toggling back to u18 leaves the mode alone.
     if (band !== "u18") {
-      state.mode = "snapshot";
       state.measure = "density";
       document.querySelectorAll(".chip.measure-chip").forEach(c => {
         c.classList.toggle("on", c.dataset.measure === "density");
@@ -1335,8 +1370,7 @@ document.querySelectorAll(".chip.age-chip").forEach(btn => {
       document.getElementById("scrub").min = YEAR_MIN;
       state.to = clampToBand(state.to);
       document.getElementById("to-year").value = state.to;
-      document.getElementById("mode-snapshot").classList.add("on");
-      clearPresetHighlight();
+      applyMode("snapshot");
     } else {
       state.from = clampToBand(state.from);
       state.to   = clampToBand(state.to);
@@ -1386,9 +1420,10 @@ function populateBandYears() {
 function updateYearOptions() {
   const fy = document.getElementById("from-year");
   const ty = document.getElementById("to-year");
+  const sy = document.getElementById("snap-year");
   let avail = state.band === "u18" ? ANCHOR_YEARS : [...BAND_YEARS_SET].sort((a,b)=>a-b);
   if (state.measure === "share") avail = avail.filter(y => y >= SHARE_YEAR_MIN);
-  for (const sel of [fy, ty]) {
+  for (const sel of [fy, ty, sy].filter(Boolean)) {
     const cur = sel.value;
     sel.innerHTML = "";
     for (const y of avail) {
@@ -1439,29 +1474,75 @@ document.querySelectorAll(".chip.measure-chip").forEach(btn => {
   });
 });
 
-const snapBtn = document.getElementById("mode-snapshot");
-snapBtn.addEventListener("click", () => {
-  state.mode = state.mode === "snapshot" ? "delta" : "snapshot";
-  snapBtn.classList.toggle("on", state.mode === "snapshot");
-  if (state.mode === "delta") {
-    // restore highlight
+// Segmented mode toggle — sets visibility of mode-only rows + state.mode.
+function applyMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll(".chip.mode-chip").forEach(c => {
+    c.classList.toggle("on", c.dataset.mode === mode);
+  });
+  document.querySelectorAll(".mode-only-delta").forEach(el => {
+    el.style.display = mode === "delta" ? "" : "none";
+  });
+  document.querySelectorAll(".mode-only-snap").forEach(el => {
+    el.style.display = mode === "snapshot" ? "" : "none";
+  });
+  const help = document.getElementById("mode-help");
+  if (help) {
+    help.innerHTML = mode === "delta"
+      ? 'Map colors show <b style="color:var(--ink-soft);font-weight:600">change</b> between two years.'
+      : 'Map colors show the <b style="color:var(--ink-soft);font-weight:600">value</b> in a single year.';
+  }
+  if (mode === "delta") {
+    // Re-highlight the matching preset, if any.
+    clearPresetHighlight();
     const match = document.querySelector(`.chip[data-preset="${state.from},${state.to}"]`);
     if (match) match.classList.add("on");
   } else {
     clearPresetHighlight();
+    // Sync the snapshot year picker to current state.to
+    const sel = document.getElementById("snap-year");
+    if (sel) sel.value = String(state.to);
+    const sscrub = document.getElementById("snap-scrub");
+    if (sscrub) sscrub.value = state.to;
   }
-  render();
+}
+
+document.querySelectorAll(".chip.mode-chip").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (btn.classList.contains("on")) return;
+    applyMode(btn.dataset.mode);
+    render();
+  });
 });
 
 const scrub = document.getElementById("scrub");
 scrub.addEventListener("input", () => {
   const y = +scrub.value;
-  if (state.mode === "snapshot") state.to = y;
-  else state.to = y;
+  state.to = y;
   document.getElementById("to-year").value = ANCHOR_YEARS.includes(y) ? y : "";
   clearPresetHighlight();
   render();
 });
+
+// Snapshot-mode year select + scrub
+const snapYear = document.getElementById("snap-year");
+const snapScrub = document.getElementById("snap-scrub");
+if (snapYear) {
+  snapYear.addEventListener("change", () => {
+    state.to = +snapYear.value;
+    snapScrub.value = state.to;
+    render();
+  });
+}
+if (snapScrub) {
+  snapScrub.addEventListener("input", () => {
+    state.to = +snapScrub.value;
+    snapYear.value = ANCHOR_YEARS.includes(state.to) ? String(state.to) :
+      // for ACS years that are valid but maybe not in select, just clear:
+      (Array.from(snapYear.options).some(o => +o.value === state.to) ? String(state.to) : "");
+    render();
+  });
+}
 
 // ---------- boot ----------
 Promise.all([
