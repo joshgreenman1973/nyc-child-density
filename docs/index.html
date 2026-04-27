@@ -162,6 +162,46 @@
   .row-list .geo { color: var(--ink-soft); font-weight: 500; }
   .row-list .val { font-family: "Fraunces", serif; font-weight: 500; white-space: nowrap; flex-shrink: 0; }
 
+  /* Story markers on the map */
+  .story-marker {
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; pointer-events: auto;
+  }
+  .story-marker .story-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1.5px var(--ink), 0 1px 4px rgba(0,0,0,0.35);
+    transition: transform 0.12s ease;
+  }
+  .story-marker.gain .story-dot { background: var(--gain); }
+  .story-marker.loss .story-dot { background: var(--loss); }
+  .story-marker:hover .story-dot { transform: scale(1.35); }
+  .leaflet-popup.story-popup .leaflet-popup-content-wrapper {
+    background: var(--paper); border: 1px solid var(--rule);
+    border-radius: 5px; box-shadow: 0 6px 28px rgba(0,0,0,0.18);
+  }
+  .leaflet-popup.story-popup .leaflet-popup-content { margin: 0; }
+  .story-pop { padding: 14px 16px 12px; max-width: 300px; }
+  .story-tag {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 6px;
+  }
+  .story-title {
+    font-family: "Fraunces", serif; font-size: 17px; line-height: 1.2;
+    font-weight: 500; letter-spacing: -0.01em; color: var(--ink);
+  }
+  .story-place { font-size: 11px; color: var(--muted); margin-top: 2px; margin-bottom: 10px; }
+  .story-body {
+    font-size: 12.5px; line-height: 1.55; color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  .story-nums {
+    display: flex; justify-content: space-between; gap: 8px;
+    padding-top: 8px; border-top: 1px solid var(--rule);
+    font-size: 11px; color: var(--muted);
+  }
+  .story-nums b { font-family: "Fraunces", serif; color: var(--ink); font-weight: 500; }
+
   /* Enrollment embed */
   .enroll {
     grid-column: 1 / -1;
@@ -358,7 +398,12 @@
         <span class="from">1970</span><span class="arrow">→</span><span>2023</span>
       </h2>
       <div class="map-sub" id="map-sub">Change in children per square mile, by 2010 census tract.
-        Red = gain, blue = loss, white = within ±10%.</div>
+        Red = gain, blue = loss, white = within ±10%.
+        <span style="white-space:nowrap;color:var(--ink-soft);">
+          &nbsp;·&nbsp; Click a <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--gain);border:1.5px solid var(--paper);box-shadow:0 0 0 1px var(--ink);vertical-align:middle;"></span>
+          or <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--loss);border:1.5px solid var(--paper);box-shadow:0 0 0 1px var(--ink);vertical-align:middle;"></span>
+          for the story behind a notable tract.
+        </span></div>
     </div>
     <div id="map"></div>
     <div class="legend-bar" id="legend"></div>
@@ -699,6 +744,154 @@ L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{
 L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png", {
   subdomains: "abcd", maxZoom: 18, pane: "shadowPane",
 }).addTo(map);
+
+// ---------- curated story markers ----------
+// Hand-picked tracts with a documented narrative. Each story is checked against
+// the underlying time series before being displayed.
+const STORIES = {
+  // GAINS
+  "G3600610031703": {
+    type: "gain",
+    title: "Battery Park City",
+    place: "Lower Manhattan",
+    body: "This entire tract is landfill placed in the Hudson during the 1970s, " +
+          "using spoil excavated for the original World Trade Center foundations. " +
+          "Underwater in 1970, it&rsquo;s now a planned community of roughly 16,000 " +
+          "residents and one of the densest child populations in Lower Manhattan.",
+  },
+  "G3600610031704": {
+    type: "gain",
+    title: "Hudson Yards & far West Side",
+    place: "Manhattan",
+    body: "The platform over the West Side rail yards opened in 2019. Combined " +
+          "with residential conversions of nearby Hell&rsquo;s Kitchen and Chelsea " +
+          "industrial blocks, this tract went from rail-yard wasteland to a " +
+          "family-bearing neighborhood in a single decade.",
+  },
+  "G3600610002100": {
+    type: "gain",
+    title: "Tribeca",
+    place: "Lower Manhattan",
+    body: "Industrial Tribeca was nearly empty by night in 1970 — a district of " +
+          "loading docks and printing plants. A 1990s rezoning that legalized " +
+          "loft-to-residential conversion, plus the post-2001 rebuilding, turned " +
+          "it into one of the most child-dense tracts in Lower Manhattan.",
+  },
+  "G3600810000100": {
+    type: "gain",
+    title: "Long Island City &mdash; Hunters Point",
+    place: "Queens",
+    body: "A working-class waterfront of factories and rail yards in 1970. The " +
+          "Queens West rezoning in the 1990s and the city-built Hunter&rsquo;s " +
+          "Point South affordable-housing complex (opened 2015) produced one of " +
+          "the largest single-tract child gains in the city.",
+  },
+  "G3600470053100": {
+    type: "gain",
+    title: "South Williamsburg",
+    place: "Brooklyn",
+    body: "The heart of the Satmar Hasidic community. A typical household fertility " +
+          "around six children, combined with deep institutional infrastructure " +
+          "(yeshivas, synagogues, a private bus system), drives one of the largest " +
+          "sustained child-population gains anywhere in the country — even as " +
+          "gentrification displaces other families on the surrounding blocks.",
+  },
+  "G3600470024000": {
+    type: "gain",
+    title: "Borough Park",
+    place: "Brooklyn",
+    body: "Borough Park is home to one of the largest Hasidic and Orthodox Jewish " +
+          "populations outside Israel. High fertility and concentrated communal " +
+          "institutions produce steady child growth across virtually every tract " +
+          "in the neighborhood; this one nearly tripled its under-18 count.",
+  },
+  // LOSSES
+  "G3600050015300": {
+    type: "loss",
+    title: "Crotona Park East",
+    place: "South Bronx",
+    body: "The largest absolute child-population loss of any tract in the study — " +
+          "from 6,666 children in 1970 to under 1,000 today. The South Bronx of " +
+          "the 1970s was the textbook case of urban abandonment: landlord arson, " +
+          "redlining, and federal disinvestment hollowed out 80% of the population " +
+          "in a decade. Recovery from the 1990s onward has rebuilt housing but not " +
+          "the family households that filled the original walk-ups.",
+  },
+  "G3600470090000": {
+    type: "loss",
+    title: "Brownsville",
+    place: "Brooklyn",
+    body: "Brownsville lost more children — about 80% of its 1970 population under " +
+          "18 — than any single Brooklyn tract. The drivers were the same as the " +
+          "South Bronx (disinvestment, abandonment, falling household size) but " +
+          "concentrated in a neighborhood whose housing stock is now dominated by " +
+          "public-housing towers built well before the decline.",
+  },
+  "G3600610002602": {
+    type: "loss",
+    title: "Alphabet City",
+    place: "East Village, Manhattan",
+    body: "Once one of the most family-dense tracts on the Lower East Side, " +
+          "Alphabet City was hollowed out by landlord abandonment in the 1970s. " +
+          "Gentrification refilled the housing stock from the 1990s onward — but " +
+          "largely with single adults, young couples, and NYU-area renters rather " +
+          "than families with children.",
+  },
+  "G3600610018900": {
+    type: "loss",
+    title: "Upper West Side &mdash; Manhattan Valley",
+    place: "Manhattan",
+    body: "Even on the prosperous Upper West Side, the under-18 count fell by " +
+          "more than 60%. The story here isn&rsquo;t abandonment but household " +
+          "composition: apartments that once housed families with multiple children " +
+          "now house single adults and childless couples, and rising rents have " +
+          "pushed family-sized units out of reach.",
+  },
+};
+
+let storyLayer = null;
+
+function buildStoryMarkers() {
+  storyLayer = L.layerGroup().addTo(map);
+  Object.entries(STORIES).forEach(([gj, s]) => {
+    const lyr = layerByGj.get(gj);
+    if (!lyr) return;
+    const c = lyr.getBounds().getCenter();
+    const cls = s.type === "gain" ? "story-marker gain" : "story-marker loss";
+    const ic = L.divIcon({
+      className: cls,
+      html: '<span class="story-dot"></span>',
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+    });
+    const m = L.marker(c, { icon: ic, riseOnHover: true, zIndexOffset: 1000 });
+    m.bindPopup(() => storyPopupHtml(gj, s), {
+      maxWidth: 320, className: "story-popup",
+    });
+    m.addTo(storyLayer);
+  });
+}
+
+function storyPopupHtml(gj, s) {
+  const k0 = countAt(gj, 1970), k1 = countAt(gj, 2023);
+  const sign = (k1 - k0) > 0 ? "+" : "−";
+  const absDiff = Math.abs(Math.round(k1 - k0)).toLocaleString();
+  const colorVar = s.type === "gain" ? "var(--gain)" : "var(--loss)";
+  const tag = s.type === "gain" ? "Built up" : "Hollowed out";
+  return `
+    <div class="story-pop">
+      <div class="story-tag" style="color:${colorVar}">${tag}</div>
+      <div class="story-title">${s.title}</div>
+      <div class="story-place">${s.place}</div>
+      <div class="story-body">${s.body}</div>
+      <div class="story-nums">
+        <span>1970: <b>${k0 < 1 ? "&mdash;" : Math.round(k0).toLocaleString()}</b> kids</span>
+        <span>2023: <b>${Math.round(k1).toLocaleString()}</b> kids</span>
+        <span style="color:${colorVar}"><b>${sign}${absDiff}</b></span>
+      </div>
+    </div>
+  `;
+}
 
 const layerByGj = new Map();
 function buildLayer() {
@@ -1291,6 +1484,7 @@ Promise.all([
   populateBandYears();
   updateBandModeUI();
   buildLayer();
+  buildStoryMarkers();
   render();
   // Update dek with real NYC-vs-suburbs split computed from the counts series.
   const NYC_COUNTIES = new Set(["005", "047", "061", "081", "085"]);
