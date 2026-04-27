@@ -107,6 +107,36 @@
   }
   .chip.ghost:not(.on):hover { background: #f0ebdd; color: var(--ink-soft); border-style: solid; }
 
+  /* Info icon (small "?" badge that opens a tooltip on hover) */
+  .info-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1px solid var(--rule);
+    background: #fff; color: var(--muted);
+    font-family: "Fraunces", serif; font-size: 12px; font-weight: 600;
+    cursor: help; user-select: none;
+    margin-left: 2px;
+    transition: all 0.12s ease;
+  }
+  .info-icon:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* Floating tooltip (rendered into a portal div by JS) */
+  .pop-tip {
+    position: absolute; z-index: 1000;
+    max-width: 320px; padding: 10px 13px;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule); border-radius: 5px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 12px; line-height: 1.5; color: var(--ink-soft);
+    pointer-events: none;
+    opacity: 0; transform: translateY(-2px);
+    transition: opacity 0.14s ease, transform 0.14s ease;
+  }
+  .pop-tip.show { opacity: 1; transform: translateY(0); }
+  .pop-tip b { color: var(--ink); font-weight: 600; }
+  .pop-tip i { color: var(--ink); font-style: italic; }
+
   /* Segmented mode toggle: visually fused pair so it reads as one control */
   .mode-toggle {
     display: inline-flex; border: 1px solid var(--ink); border-radius: 999px;
@@ -355,16 +385,21 @@
     <div id="u18-controls">
       <div class="bar-row">
         <span class="bar-label">Measure</span>
-        <button class="chip measure-chip on" data-measure="density">Density <span style="color:var(--muted);font-weight:400">(kids per sq mi)</span></button>
-        <button class="chip measure-chip" data-measure="share">Share under 18 <span style="color:var(--muted);font-weight:400">(% of total pop)</span></button>
+        <button class="chip measure-chip on" data-measure="density"
+          data-tip="<b>Density</b> = children &divide; land area (kids per sq&nbsp;mi).<br><br>Highlights the most child-packed corners of the region &mdash; but the score is driven as much by <i>overall</i> housing density (high-rises vs. brownstones vs. single-family) as by whether the neighborhood is family-oriented. Midtown will look thin even if the few people who live there are mostly families.">Density <span style="color:var(--muted);font-weight:400">(kids per sq mi)</span></button>
+        <button class="chip measure-chip" data-measure="share"
+          data-tip="<b>Share under 18</b> = children &divide; total population (a percent).<br><br>Controls for overall density. A tract with 5,000 kids and 25,000 adults scores the same (20%) as a tract with 500 kids and 2,500 adults. High numbers mean a neighborhood is <i>disproportionately</i> oriented to families with children, regardless of how dense the housing is.<br><br>Limited to 2000&ndash;2023 because pre-2000 total-population denominators aren&rsquo;t in the same pipeline.">Share under 18 <span style="color:var(--muted);font-weight:400">(% of total pop)</span></button>
+        <span class="info-icon" data-tip="<b>Density</b> tells you <i>where the children physically are</i>. <b>Share</b> tells you <i>where children are over-represented</i>. They can disagree sharply: Manhattan&rsquo;s Upper East Side has high density of children (lots of families packed into tall buildings) but a low <i>share</i> (those buildings hold even more childless adults). Borough Park has high density <i>and</i> high share. Suburban Glen Rock has low density but a high share.">?</span>
         <span style="flex:1"></span>
         <span style="font-size:11px;color:var(--muted);" id="measure-note"></span>
       </div>
       <div class="bar-row">
         <span class="bar-label">View</span>
         <span class="mode-toggle">
-          <button class="chip mode-chip on" data-mode="delta">Compare two years</button>
-          <button class="chip mode-chip" data-mode="snapshot">Single year</button>
+          <button class="chip mode-chip on" data-mode="delta"
+            data-tip="<b>Compare two years.</b> The map colors each tract by how much it <i>changed</i> between a &lsquo;from&rsquo; year and a &lsquo;to&rsquo; year. Red = gain, blue = loss, white = within &plusmn;10%. Use this to see where the kids went.">Compare two years</button>
+          <button class="chip mode-chip" data-mode="snapshot"
+            data-tip="<b>Single year.</b> The map colors each tract by its <i>value</i> in one year &mdash; either density (kids per sq mi) or share (% under 18). No comparison; just a snapshot of how the region looked at a single point in time.">Single year</button>
         </span>
         <span style="flex:1"></span>
         <span style="font-size:11px;color:var(--muted)" id="mode-help">Map colors show <b style="color:var(--ink-soft);font-weight:600">change</b> in density between two years.</span>
@@ -1473,6 +1508,58 @@ document.querySelectorAll(".chip.measure-chip").forEach(btn => {
     render();
   });
 });
+
+// ---------- tooltip system ----------
+// Single shared tooltip element. Any element with [data-tip="..."] gets one
+// on hover or focus. Tip content may be HTML.
+(function setupTooltips() {
+  const tip = document.createElement("div");
+  tip.className = "pop-tip";
+  document.body.appendChild(tip);
+  let pinned = null;
+  function show(target) {
+    const html = target.getAttribute("data-tip");
+    if (!html) return;
+    tip.innerHTML = html;
+    // Position: below target, horizontally clamped within viewport.
+    const r = target.getBoundingClientRect();
+    tip.style.left = "0px"; tip.style.top = "0px";
+    tip.classList.add("show");
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = window.scrollX + r.left + r.width / 2 - tw / 2;
+    let top  = window.scrollY + r.bottom + 8;
+    // Clamp horizontally
+    const minL = window.scrollX + 8;
+    const maxL = window.scrollX + document.documentElement.clientWidth - tw - 8;
+    if (left < minL) left = minL;
+    if (left > maxL) left = maxL;
+    // Flip above if it would go off the bottom
+    if (r.bottom + 8 + th > window.innerHeight - 4) {
+      top = window.scrollY + r.top - th - 8;
+    }
+    tip.style.left = left + "px";
+    tip.style.top  = top  + "px";
+  }
+  function hide() { tip.classList.remove("show"); }
+  document.addEventListener("mouseover", (e) => {
+    const t = e.target.closest("[data-tip]");
+    if (t) show(t);
+  });
+  document.addEventListener("mouseout", (e) => {
+    const t = e.target.closest("[data-tip]");
+    if (t && !t.contains(e.relatedTarget)) hide();
+  });
+  document.addEventListener("focusin", (e) => {
+    const t = e.target.closest && e.target.closest("[data-tip]");
+    if (t) show(t);
+  });
+  document.addEventListener("focusout", (e) => {
+    const t = e.target.closest && e.target.closest("[data-tip]");
+    if (t) hide();
+  });
+  // Hide on scroll (positioning would otherwise drift)
+  window.addEventListener("scroll", hide, { passive: true });
+})();
 
 // Segmented mode toggle — sets visibility of mode-only rows + state.mode.
 function applyMode(mode) {
