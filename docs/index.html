@@ -579,7 +579,7 @@
       </p>
     </div>
     <div style="background:#fbf7ec;border:1px solid var(--rule);border-radius:4px;padding:18px 20px;">
-      <svg id="components-chart" viewBox="0 0 760 460" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;font-family:'Inter',sans-serif;"></svg>
+      <svg id="components-chart" viewBox="0 0 840 460" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;font-family:'Inter',sans-serif;"></svg>
       <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px;">
         <span><span style="display:inline-block;width:11px;height:11px;background:#2f6b3e;vertical-align:middle;margin-right:6px;"></span>Natural change (births − deaths)</span>
         <span><span style="display:inline-block;width:11px;height:11px;background:#2b6aa3;vertical-align:middle;margin-right:6px;"></span>Net migration (in − out)</span>
@@ -1855,14 +1855,18 @@ const ENROLL = [
     return orderSub.indexOf(a.name) - orderSub.indexOf(b.name);
   });
 
-  const W=760, H=460, padL=130, padR=30, padT=30, padB=30;
+  const W=840, H=460, padL=160, padR=100, padT=30, padB=30;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
   const rowH = plotH / rows.length;
   const barH = Math.min(18, rowH*0.36);
 
-  const minV = Math.min(0, ...rows.map(r => Math.min(r.nat, r.mig)));
-  const maxV = Math.max(0, ...rows.map(r => Math.max(r.nat, r.mig)));
+  const rawMin = Math.min(0, ...rows.map(r => Math.min(r.nat, r.mig)));
+  const rawMax = Math.max(0, ...rows.map(r => Math.max(r.nat, r.mig)));
+  // Snap to nice round numbers so the longest bars don't push labels off the chart
+  const snap = 50000;
+  const minV = Math.floor(rawMin / snap) * snap;
+  const maxV = Math.ceil(rawMax / snap) * snap;
   const range = maxV - minV;
   const x0 = padL + (0 - minV) / range * plotW;
   const xAt = v => padL + (v - minV) / range * plotW;
@@ -1909,10 +1913,9 @@ const ENROLL = [
     // Net total marker (black tick)
     const tx = xAt(r.tot);
     html += `<line x1="${tx}" x2="${tx}" y1="${yMid-barH-3}" y2="${yMid+barH+3}" stroke="#1a1915" stroke-width="2"/>`;
-    // Net value label (outside bars)
-    const labelX = r.tot >= 0 ? Math.max(xAt(r.nat), xAt(r.mig), tx) + 6 : Math.min(xAt(r.nat), xAt(r.mig), tx) - 6;
-    const anchor = r.tot >= 0 ? "start" : "end";
-    html += `<text x="${labelX}" y="${yMid+4}" text-anchor="${anchor}" font-size="10.5" fill="#3c3a33" font-weight="500">${fmt(r.tot)} net</text>`;
+    // Net value label — always to the right of the rightmost bar end
+    const rightmost = Math.max(xAt(r.nat), xAt(r.mig), tx, x0);
+    html += `<text x="${rightmost + 6}" y="${yMid+4}" text-anchor="start" font-size="10.5" fill="#3c3a33" font-weight="500">${fmt(r.tot)} net</text>`;
   });
 
   // Group annotations
