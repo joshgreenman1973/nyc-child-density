@@ -1,0 +1,739 @@
+{
+  "Bronx": {
+    "fips": "36005",
+    "group": "nyc",
+    "years": {
+      "2011": {
+        "natural": 13196,
+        "netmig": -3244
+      },
+      "2012": {
+        "natural": 12790,
+        "netmig": 1266
+      },
+      "2013": {
+        "natural": 12132,
+        "netmig": -1805
+      },
+      "2014": {
+        "natural": 12065,
+        "netmig": -3219
+      },
+      "2015": {
+        "natural": 12048,
+        "netmig": -3079
+      },
+      "2016": {
+        "natural": 11639,
+        "netmig": -7297
+      },
+      "2017": {
+        "natural": 11160,
+        "netmig": -15050
+      },
+      "2018": {
+        "natural": 9546,
+        "netmig": -18161
+      },
+      "2019": {
+        "natural": 8529,
+        "netmig": -22506
+      },
+      "2020": {
+        "natural": -2723,
+        "netmig": -9434
+      },
+      "2021": {
+        "natural": 5555,
+        "netmig": -42120
+      },
+      "2022": {
+        "natural": 6039,
+        "netmig": -45326
+      },
+      "2023": {
+        "natural": 6504,
+        "netmig": -16185
+      },
+      "2024": {
+        "natural": 6743,
+        "netmig": 2705
+      }
+    },
+    "cum": {
+      "natural": 125223,
+      "netmig": -183455,
+      "total": -58232
+    }
+  },
+  "Brooklyn (Kings)": {
+    "fips": "36047",
+    "group": "nyc",
+    "years": {
+      "2011": {
+        "natural": 26092,
+        "netmig": 4929
+      },
+      "2012": {
+        "natural": 26422,
+        "netmig": 1641
+      },
+      "2013": {
+        "natural": 26490,
+        "netmig": -7099
+      },
+      "2014": {
+        "natural": 25798,
+        "netmig": -11935
+      },
+      "2015": {
+        "natural": 26191,
+        "netmig": -19003
+      },
+      "2016": {
+        "natural": 25568,
+        "netmig": -25975
+      },
+      "2017": {
+        "natural": 24121,
+        "netmig": -37913
+      },
+      "2018": {
+        "natural": 21072,
+        "netmig": -37654
+      },
+      "2019": {
+        "natural": 19568,
+        "netmig": -37742
+      },
+      "2020": {
+        "natural": -2701,
+        "netmig": -15707
+      },
+      "2021": {
+        "natural": 14736,
+        "netmig": -91543
+      },
+      "2022": {
+        "natural": 15927,
+        "netmig": -55360
+      },
+      "2023": {
+        "natural": 15516,
+        "netmig": -19190
+      },
+      "2024": {
+        "natural": 15400,
+        "netmig": 9511
+      }
+    },
+    "cum": {
+      "natural": 280200,
+      "netmig": -343040,
+      "total": -62840
+    }
+  },
+  "Manhattan (NY)": {
+    "fips": "36061",
+    "group": "nyc",
+    "years": {
+      "2011": {
+        "natural": 9631,
+        "netmig": 9831
+      },
+      "2012": {
+        "natural": 9960,
+        "netmig": 5795
+      },
+      "2013": {
+        "natural": 9127,
+        "netmig": -5547
+      },
+      "2014": {
+        "natural": 8349,
+        "netmig": -5104
+      },
+      "2015": {
+        "natural": 8083,
+        "netmig": -2622
+      },
+      "2016": {
+        "natural": 7501,
+        "netmig": -8123
+      },
+      "2017": {
+        "natural": 7510,
+        "netmig": -12229
+      },
+      "2018": {
+        "natural": 5825,
+        "netmig": -7393
+      },
+      "2019": {
+        "natural": 4797,
+        "netmig": -5003
+      },
+      "2020": {
+        "natural": -1750,
+        "netmig": -11703
+      },
+      "2021": {
+        "natural": 2050,
+        "netmig": -97251
+      },
+      "2022": {
+        "natural": 2992,
+        "netmig": 17000
+      },
+      "2023": {
+        "natural": 2676,
+        "netmig": 33166
+      },
+      "2024": {
+        "natural": 2588,
+        "netmig": 24881
+      }
+    },
+    "cum": {
+      "natural": 79339,
+      "netmig": -64302,
+      "total": 15037
+    }
+  },
+  "Queens": {
+    "fips": "36081",
+    "group": "nyc",
+    "years": {
+      "2011": {
+        "natural": 16913,
+        "netmig": 3836
+      },
+      "2012": {
+        "natural": 16298,
+        "netmig": 385
+      },
+      "2013": {
+        "natural": 16435,
+        "netmig": -1388
+      },
+      "2014": {
+        "natural": 16211,
+        "netmig": -4680
+      },
+      "2015": {
+        "natural": 15809,
+        "netmig": -8806
+      },
+      "2016": {
+        "natural": 16313,
+        "netmig": -15407
+      },
+      "2017": {
+        "natural": 15001,
+        "netmig": -26118
+      },
+      "2018": {
+        "natural": 12723,
+        "netmig": -34032
+      },
+      "2019": {
+        "natural": 11073,
+        "netmig": -31906
+      },
+      "2020": {
+        "natural": -4315,
+        "netmig": -10563
+      },
+      "2021": {
+        "natural": 6741,
+        "netmig": -64588
+      },
+      "2022": {
+        "natural": 7887,
+        "netmig": -53425
+      },
+      "2023": {
+        "natural": 8581,
+        "netmig": 490
+      },
+      "2024": {
+        "natural": 9031,
+        "netmig": 13219
+      }
+    },
+    "cum": {
+      "natural": 164701,
+      "netmig": -232983,
+      "total": -68282
+    }
+  },
+  "Staten Is. (Richmond)": {
+    "fips": "36085",
+    "group": "nyc",
+    "years": {
+      "2011": {
+        "natural": 2373,
+        "netmig": -967
+      },
+      "2012": {
+        "natural": 2213,
+        "netmig": -2678
+      },
+      "2013": {
+        "natural": 1729,
+        "netmig": -487
+      },
+      "2014": {
+        "natural": 1779,
+        "netmig": -1620
+      },
+      "2015": {
+        "natural": 1538,
+        "netmig": -1103
+      },
+      "2016": {
+        "natural": 1758,
+        "netmig": -50
+      },
+      "2017": {
+        "natural": 1790,
+        "netmig": -139
+      },
+      "2018": {
+        "natural": 1394,
+        "netmig": -799
+      },
+      "2019": {
+        "natural": 1175,
+        "netmig": -1291
+      },
+      "2020": {
+        "natural": -635,
+        "netmig": -592
+      },
+      "2021": {
+        "natural": 608,
+        "netmig": -1914
+      },
+      "2022": {
+        "natural": 871,
+        "netmig": -2183
+      },
+      "2023": {
+        "natural": 901,
+        "netmig": 1274
+      },
+      "2024": {
+        "natural": 865,
+        "netmig": 2543
+      }
+    },
+    "cum": {
+      "natural": 18359,
+      "netmig": -10006,
+      "total": 8353
+    }
+  },
+  "Nassau": {
+    "fips": "36059",
+    "group": "suburb",
+    "years": {
+      "2011": {
+        "natural": 3417,
+        "netmig": 1170
+      },
+      "2012": {
+        "natural": 3432,
+        "netmig": 88
+      },
+      "2013": {
+        "natural": 2396,
+        "netmig": 296
+      },
+      "2014": {
+        "natural": 3686,
+        "netmig": -1074
+      },
+      "2015": {
+        "natural": 3291,
+        "netmig": -3115
+      },
+      "2016": {
+        "natural": 3503,
+        "netmig": -2369
+      },
+      "2017": {
+        "natural": 3266,
+        "netmig": -1886
+      },
+      "2018": {
+        "natural": 3001,
+        "netmig": -2741
+      },
+      "2019": {
+        "natural": 2689,
+        "netmig": -3291
+      },
+      "2020": {
+        "natural": -2339,
+        "netmig": -2781
+      },
+      "2021": {
+        "natural": 1731,
+        "netmig": -1154
+      },
+      "2022": {
+        "natural": 2496,
+        "netmig": -7769
+      },
+      "2023": {
+        "natural": 2752,
+        "netmig": -3636
+      },
+      "2024": {
+        "natural": 3092,
+        "netmig": 3230
+      }
+    },
+    "cum": {
+      "natural": 36413,
+      "netmig": -25032,
+      "total": 11381
+    }
+  },
+  "Westchester": {
+    "fips": "36119",
+    "group": "suburb",
+    "years": {
+      "2011": {
+        "natural": 3889,
+        "netmig": 1801
+      },
+      "2012": {
+        "natural": 3721,
+        "netmig": -371
+      },
+      "2013": {
+        "natural": 3323,
+        "netmig": 1819
+      },
+      "2014": {
+        "natural": 3678,
+        "netmig": -1126
+      },
+      "2015": {
+        "natural": 3760,
+        "netmig": -2006
+      },
+      "2016": {
+        "natural": 3719,
+        "netmig": -2229
+      },
+      "2017": {
+        "natural": 3059,
+        "netmig": -3645
+      },
+      "2018": {
+        "natural": 2926,
+        "netmig": -4415
+      },
+      "2019": {
+        "natural": 2601,
+        "netmig": -3330
+      },
+      "2020": {
+        "natural": -1278,
+        "netmig": -1761
+      },
+      "2021": {
+        "natural": 1815,
+        "netmig": -3771
+      },
+      "2022": {
+        "natural": 2388,
+        "netmig": -9284
+      },
+      "2023": {
+        "natural": 2632,
+        "netmig": 762
+      },
+      "2024": {
+        "natural": 3202,
+        "netmig": 6269
+      }
+    },
+    "cum": {
+      "natural": 39435,
+      "netmig": -21287,
+      "total": 18148
+    }
+  },
+  "Bergen": {
+    "fips": "34003",
+    "group": "suburb",
+    "years": {
+      "2011": {
+        "natural": 2368,
+        "netmig": 3367
+      },
+      "2012": {
+        "natural": 2109,
+        "netmig": 2294
+      },
+      "2013": {
+        "natural": 1898,
+        "netmig": 1945
+      },
+      "2014": {
+        "natural": 2336,
+        "netmig": 1219
+      },
+      "2015": {
+        "natural": 2315,
+        "netmig": 717
+      },
+      "2016": {
+        "natural": 2517,
+        "netmig": -781
+      },
+      "2017": {
+        "natural": 2158,
+        "netmig": 2174
+      },
+      "2018": {
+        "natural": 1968,
+        "netmig": -1567
+      },
+      "2019": {
+        "natural": 1905,
+        "netmig": -2530
+      },
+      "2020": {
+        "natural": -1381,
+        "netmig": -766
+      },
+      "2021": {
+        "natural": 1326,
+        "netmig": -127
+      },
+      "2022": {
+        "natural": 1834,
+        "netmig": -3
+      },
+      "2023": {
+        "natural": 2139,
+        "netmig": 7213
+      },
+      "2024": {
+        "natural": 1966,
+        "netmig": 10155
+      }
+    },
+    "cum": {
+      "natural": 25458,
+      "netmig": 23310,
+      "total": 48768
+    }
+  },
+  "Hudson": {
+    "fips": "34017",
+    "group": "suburb",
+    "years": {
+      "2011": {
+        "natural": 6461,
+        "netmig": 3519
+      },
+      "2012": {
+        "natural": 6609,
+        "netmig": 134
+      },
+      "2013": {
+        "natural": 6471,
+        "netmig": -1811
+      },
+      "2014": {
+        "natural": 6522,
+        "netmig": -3463
+      },
+      "2015": {
+        "natural": 6523,
+        "netmig": -2352
+      },
+      "2016": {
+        "natural": 6768,
+        "netmig": -2690
+      },
+      "2017": {
+        "natural": 6471,
+        "netmig": -2232
+      },
+      "2018": {
+        "natural": 5954,
+        "netmig": -6849
+      },
+      "2019": {
+        "natural": 5648,
+        "netmig": -5164
+      },
+      "2020": {
+        "natural": -99,
+        "netmig": -2847
+      },
+      "2021": {
+        "natural": 4563,
+        "netmig": -21660
+      },
+      "2022": {
+        "natural": 4892,
+        "netmig": 502
+      },
+      "2023": {
+        "natural": 4884,
+        "netmig": 7915
+      },
+      "2024": {
+        "natural": 4317,
+        "netmig": 10622
+      }
+    },
+    "cum": {
+      "natural": 75984,
+      "netmig": -26376,
+      "total": 49608
+    }
+  },
+  "Middlesex": {
+    "fips": "34023",
+    "group": "suburb",
+    "years": {
+      "2011": {
+        "natural": 4334,
+        "netmig": 88
+      },
+      "2012": {
+        "natural": 4485,
+        "netmig": -333
+      },
+      "2013": {
+        "natural": 3921,
+        "netmig": -1561
+      },
+      "2014": {
+        "natural": 3748,
+        "netmig": -1371
+      },
+      "2015": {
+        "natural": 3756,
+        "netmig": -2443
+      },
+      "2016": {
+        "natural": 3733,
+        "netmig": -3863
+      },
+      "2017": {
+        "natural": 3253,
+        "netmig": -1391
+      },
+      "2018": {
+        "natural": 2853,
+        "netmig": -4085
+      },
+      "2019": {
+        "natural": 2623,
+        "netmig": -3776
+      },
+      "2020": {
+        "natural": -660,
+        "netmig": -1179
+      },
+      "2021": {
+        "natural": 1542,
+        "netmig": -1037
+      },
+      "2022": {
+        "natural": 2175,
+        "netmig": 1515
+      },
+      "2023": {
+        "natural": 2382,
+        "netmig": 7422
+      },
+      "2024": {
+        "natural": 2436,
+        "netmig": 11503
+      }
+    },
+    "cum": {
+      "natural": 40581,
+      "netmig": -511,
+      "total": 40070
+    }
+  },
+  "Union": {
+    "fips": "34039",
+    "group": "suburb",
+    "years": {
+      "2011": {
+        "natural": 3045,
+        "netmig": -490
+      },
+      "2012": {
+        "natural": 2869,
+        "netmig": 238
+      },
+      "2013": {
+        "natural": 2717,
+        "netmig": 396
+      },
+      "2014": {
+        "natural": 3095,
+        "netmig": -1104
+      },
+      "2015": {
+        "natural": 2793,
+        "netmig": -903
+      },
+      "2016": {
+        "natural": 3000,
+        "netmig": -126
+      },
+      "2017": {
+        "natural": 2851,
+        "netmig": -901
+      },
+      "2018": {
+        "natural": 2696,
+        "netmig": -1049
+      },
+      "2019": {
+        "natural": 2543,
+        "netmig": -2629
+      },
+      "2020": {
+        "natural": -681,
+        "netmig": -1025
+      },
+      "2021": {
+        "natural": 1892,
+        "netmig": -2826
+      },
+      "2022": {
+        "natural": 2422,
+        "netmig": -1949
+      },
+      "2023": {
+        "natural": 2631,
+        "netmig": 5804
+      },
+      "2024": {
+        "natural": 2624,
+        "netmig": 9410
+      }
+    },
+    "cum": {
+      "natural": 34497,
+      "netmig": 2846,
+      "total": 37343
+    }
+  }
+}
