@@ -12,13 +12,17 @@ is on 2020 tracts - we handle that below by writing GEOID as-is and letting
 the build step crosswalk.
 """
 
-import json, time
+import json, os, time
 from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 DATA.mkdir(exist_ok=True)
+
+# Census API now requires a key; keyless calls 302-redirect and fail.
+# Free key: https://api.census.gov/data/key_signup.html
+KEY = os.environ.get("CENSUS_API_KEY", "")
 
 STATE_COUNTIES = {
     "36": ["005", "047", "061", "081", "085", "119", "059"],
@@ -35,6 +39,8 @@ ENDYEARS = list(range(2011, 2024))
 
 
 def fetch_year(endyear):
+    if not KEY:
+        raise SystemExit("Set CENSUS_API_KEY (free: https://api.census.gov/data/key_signup.html). Keyless Census API calls now fail.")
     base = f"https://api.census.gov/data/{endyear}/acs/acs5"
     get = ",".join(["NAME"] + VARS)
     out = []
@@ -44,6 +50,7 @@ def fetch_year(endyear):
                 "get": get,
                 "for": "tract:*",
                 "in": f"state:{state} county:{county}",
+                "key": KEY,
             }
             r = requests.get(base, params=params, timeout=60)
             if r.status_code != 200:

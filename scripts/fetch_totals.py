@@ -20,6 +20,7 @@ under 18" map view.
 """
 
 import json
+import os
 import time
 from pathlib import Path
 
@@ -28,6 +29,10 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 DATA.mkdir(exist_ok=True)
+
+# Census API now requires a key; keyless calls 302-redirect and fail.
+# Free key: https://api.census.gov/data/key_signup.html
+KEY = os.environ.get("CENSUS_API_KEY", "")
 
 STATE_COUNTIES = {
     "36": ["005", "047", "061", "081", "085", "119", "059"],
@@ -42,6 +47,8 @@ def fetch_decennial(year):
     else:
         base = f"https://api.census.gov/data/{year}/dec/sf1"
         var = "P012001"
+    if not KEY:
+        raise SystemExit("Set CENSUS_API_KEY (free: https://api.census.gov/data/key_signup.html). Keyless Census API calls now fail.")
     out = []
     for state, counties in STATE_COUNTIES.items():
         for county in counties:
@@ -49,6 +56,7 @@ def fetch_decennial(year):
                 "get": f"NAME,{var}",
                 "for": "tract:*",
                 "in": f"state:{state} county:{county}",
+                "key": KEY,
             }
             r = requests.get(base, params=params, timeout=60)
             r.raise_for_status()
@@ -71,6 +79,8 @@ def fetch_decennial(year):
 
 
 def fetch_acs(endyear):
+    if not KEY:
+        raise SystemExit("Set CENSUS_API_KEY (free: https://api.census.gov/data/key_signup.html). Keyless Census API calls now fail.")
     base = f"https://api.census.gov/data/{endyear}/acs/acs5"
     var = "B01001_001E"
     out = []
@@ -80,6 +90,7 @@ def fetch_acs(endyear):
                 "get": f"NAME,{var}",
                 "for": "tract:*",
                 "in": f"state:{state} county:{county}",
+                "key": KEY,
             }
             r = requests.get(base, params=params, timeout=60)
             if r.status_code != 200:

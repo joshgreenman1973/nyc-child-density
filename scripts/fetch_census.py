@@ -1,7 +1,7 @@
 """
 Fetch NYC under-18 population by census tract, for as many years as possible.
 
-Sources used (no API key — stays under anonymous 500/day limit):
+Sources used (Census API key now required — set CENSUS_API_KEY env var):
 - Decennial 2000 SF1, variable P012003..P012025 (male <18) + P012027..P012049 (female <18)
   Simpler: P012003 + P012004 + P012005 + P012006 = males 0-17 by age group
   Even simpler: table P014 (sex by single year of age under 20) — or just use age-grouped P012.
@@ -25,12 +25,17 @@ For a first pass, I'll fetch Decennial 2000, 2010, 2020 using P012 sums.
 """
 
 import json
+import os
 import time
 from pathlib import Path
 import requests
 
 OUT = Path(__file__).resolve().parent.parent / "data"
 OUT.mkdir(exist_ok=True)
+
+# Census API now requires a key; keyless calls 302-redirect and fail.
+# Free key: https://api.census.gov/data/key_signup.html
+KEY = os.environ.get("CENSUS_API_KEY", "")
 
 # NYC + counties that share a land or water border with NYC.
 # Keyed by state FIPS.
@@ -71,6 +76,8 @@ def vars_for_year(year):
 
 
 def fetch(year):
+    if not KEY:
+        raise SystemExit("Set CENSUS_API_KEY (free: https://api.census.gov/data/key_signup.html). Keyless Census API calls now fail.")
     base = DATASETS[year]
     variables = vars_for_year(year)
     get_clause = ",".join(["NAME"] + variables)
@@ -81,6 +88,7 @@ def fetch(year):
                 "get": get_clause,
                 "for": "tract:*",
                 "in": f"state:{state} county:{county}",
+                "key": KEY,
             }
             r = requests.get(base, params=params, timeout=60)
             r.raise_for_status()

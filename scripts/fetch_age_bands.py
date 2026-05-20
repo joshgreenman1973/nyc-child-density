@@ -27,13 +27,17 @@ Output: docs/age_bands.json
 This is joined in the frontend against the existing under-18 time series.
 """
 
-import json, time
+import json, os, time
 from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 WEB = ROOT / "docs"
+
+# Census API now requires a key; keyless calls 302-redirect and fail.
+# Free key: https://api.census.gov/data/key_signup.html
+KEY = os.environ.get("CENSUS_API_KEY", "")
 
 STATE_COUNTIES = {
     "36": ["005", "047", "061", "081", "085", "119", "059"],
@@ -69,6 +73,8 @@ def fetch_decennial(year):
         2010: "https://api.census.gov/data/2010/dec/sf1",
         2020: "https://api.census.gov/data/2020/dec/dhc",
     }[year]
+    if not KEY:
+        raise SystemExit("Set CENSUS_API_KEY (free: https://api.census.gov/data/key_signup.html). Keyless Census API calls now fail.")
     male, female = dec_vars(year)
     all_vars = male + female
     get = ",".join(["NAME"] + all_vars)
@@ -76,7 +82,7 @@ def fetch_decennial(year):
     for state, counties in STATE_COUNTIES.items():
         for county in counties:
             params = {"get": get, "for": "tract:*",
-                      "in": f"state:{state} county:{county}"}
+                      "in": f"state:{state} county:{county}", "key": KEY}
             r = requests.get(base, params=params, timeout=60)
             r.raise_for_status()
             header, *body = r.json()
@@ -96,6 +102,8 @@ def fetch_decennial(year):
 
 
 def fetch_acs(endyear):
+    if not KEY:
+        raise SystemExit("Set CENSUS_API_KEY (free: https://api.census.gov/data/key_signup.html). Keyless Census API calls now fail.")
     base = f"https://api.census.gov/data/{endyear}/acs/acs5"
     all_vars = ACS_MALE + ACS_FEMALE
     get = ",".join(["NAME"] + all_vars)
@@ -103,7 +111,7 @@ def fetch_acs(endyear):
     for state, counties in STATE_COUNTIES.items():
         for county in counties:
             params = {"get": get, "for": "tract:*",
-                      "in": f"state:{state} county:{county}"}
+                      "in": f"state:{state} county:{county}", "key": KEY}
             r = requests.get(base, params=params, timeout=60)
             if r.status_code != 200:
                 print(f"   {endyear} {state}{county}: HTTP {r.status_code}")
