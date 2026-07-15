@@ -32,7 +32,11 @@ WANTED_COUNTIES = {
 }
 
 YEAR_MIN = 1970
-YEAR_MAX = 2023
+# Latest ACS endyear we actually have fetched data for (fetch_acs.py extends
+# this automatically as new Census releases come out); falls back to 2023 if
+# somehow nothing has been fetched yet.
+_acs_years = [int(p.stem.rsplit("_", 1)[1]) for p in DATA.glob("acs5_under18_*.json")]
+YEAR_MAX = max(_acs_years) if _acs_years else 2023
 
 
 def load_nhgis():
@@ -77,8 +81,10 @@ def load_nhgis():
 def load_acs():
     """Returns: {geoid11 : {endyear: under18}}"""
     out = {}
-    for ey in range(2011, 2024):
+    for ey in range(2011, YEAR_MAX + 1):
         path = DATA / f"acs5_under18_{ey}.json"
+        if not path.exists():
+            continue
         rows = json.loads(path.read_text())
         for r in rows:
             if r["under18"] is None:
@@ -105,7 +111,7 @@ def load_total_decennial():
 def load_total_acs():
     """Returns: {geoid : {endyear: total_pop}} for 2011-2023."""
     out = {}
-    for ey in range(2011, 2024):
+    for ey in range(2011, YEAR_MAX + 1):
         path = DATA / f"acs5_total_{ey}.json"
         if not path.exists():
             continue
@@ -296,7 +302,7 @@ def main():
     }))
 
     print("decade totals (sum of tract series):")
-    for d in [1970, 1980, 1990, 2000, 2010, 2015, 2020, 2023]:
+    for d in sorted({1970, 1980, 1990, 2000, 2010, 2015, 2020, YEAR_MAX}):
         if d in summary_total:
             print(f"  {d}: {summary_total[d]:,}")
 
@@ -306,12 +312,12 @@ def main():
     # ACS years, and writes docs/totals_timeseries.json in the same shape as
     # counts_timeseries.json but spanning 2000-2023 only (pre-2000 totals
     # aren't available without a second NHGIS crosswalk pass).
-    print("\nbuilding totals timeseries (2000-2023)...")
+    print(f"\nbuilding totals timeseries (2000-{YEAR_MAX})...")
     dec_tot = load_total_decennial()
     acs_tot = load_total_acs()
     print(f"  {len(dec_tot)} tracts with decennial totals, {len(acs_tot)} with ACS totals")
 
-    T_MIN, T_MAX = 2000, 2023
+    T_MIN, T_MAX = 2000, YEAR_MAX
     totals_ts = {}
     for _, row in geom.iterrows():
         geoid = row["geoid"]
@@ -350,7 +356,7 @@ def main():
     }, separators=(",", ":")))
     print(f"  wrote totals_timeseries.json ({len(totals_ts)} tracts)")
     # Region-wide share check at a few anchor years.
-    for y in [2000, 2010, 2020, 2023]:
+    for y in sorted({2000, 2010, 2020, YEAR_MAX}):
         tot = sum(totals_ts[gj][y - T_MIN] for gj in totals_ts)
         kid = sum(tracts_series[gj][y - YEAR_MIN] for gj in totals_ts)
         if tot > 0:

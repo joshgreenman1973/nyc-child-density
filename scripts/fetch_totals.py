@@ -21,10 +21,14 @@ under 18" map view.
 
 import json
 import os
+import sys
 import time
 from pathlib import Path
 
 import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fetch_acs import latest_available_endyear
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -126,7 +130,14 @@ def main():
         total = sum((r["total"] or 0) for r in rows)
         print(f"  {len(rows)} tracts, total pop {total:,}")
 
-    for ey in range(2011, 2024):
+    cached_years = sorted(
+        int(p.stem.rsplit("_", 1)[1]) for p in DATA.glob("acs5_total_*.json")
+    )
+    probe_start = (cached_years[-1] + 1) if cached_years else 2011
+    newest = latest_available_endyear(probe_start, KEY)
+    endyears = range(2011, max(newest, probe_start - 1) + 1)
+
+    for ey in endyears:
         path = DATA / f"acs5_total_{ey}.json"
         if path.exists():
             print(f"skip ACS {ey} (cached)")

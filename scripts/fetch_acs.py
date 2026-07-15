@@ -34,8 +34,32 @@ FEMALE = ["B01001_027E", "B01001_028E", "B01001_029E", "B01001_030E"]
 VARS = MALE + FEMALE
 
 # ACS 5-year endyears. 2009 is earliest; 2011-2023 gives us real data that
-# overlaps and extends past the decennial 2010 anchor.
-ENDYEARS = list(range(2011, 2024))
+# overlaps and extends past the decennial 2010 anchor. EARLIEST is fixed;
+# the upper bound is auto-detected each run so a new Census release picks up
+# automatically without editing this file.
+EARLIEST_ENDYEAR = 2011
+
+
+def latest_available_endyear(start_probe, key):
+    """Probe api.census.gov upward from start_probe to find the newest
+    published ACS5 endyear (Census usually releases the next one in December).
+    Returns the last endyear that responded successfully."""
+    year = start_probe
+    latest = start_probe - 1
+    while True:
+        url = f"https://api.census.gov/data/{year}/acs/acs5"
+        try:
+            r = requests.get(url, params={"get": "NAME", "for": "state:36", "key": key}, timeout=30)
+        except requests.RequestException:
+            break
+        if r.status_code != 200:
+            break
+        latest = year
+        year += 1
+    return latest
+
+
+ENDYEARS = None  # resolved in main() once KEY is known
 
 
 def fetch_year(endyear):
@@ -75,7 +99,16 @@ def fetch_year(endyear):
 
 
 def main():
-    for ey in ENDYEARS:
+    if not KEY:
+        raise SystemExit("Set CENSUS_API_KEY (free: https://api.census.gov/data/key_signup.html). Keyless Census API calls now fail.")
+    cached_years = sorted(
+        int(p.stem.rsplit("_", 1)[1]) for p in DATA.glob("acs5_under18_*.json")
+    )
+    probe_start = (cached_years[-1] + 1) if cached_years else EARLIEST_ENDYEAR
+    newest = latest_available_endyear(probe_start, KEY)
+    endyears = list(range(EARLIEST_ENDYEAR, max(newest, probe_start - 1) + 1))
+    print(f"Fetching endyears {endyears[0]}-{endyears[-1]} (newest published: {newest})")
+    for ey in endyears:
         outpath = DATA / f"acs5_under18_{ey}.json"
         if outpath.exists():
             print(f"skip {ey} (cached)")
