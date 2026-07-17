@@ -1,0 +1,36 @@
+name: Annual ACS refresh
+
+# Rebuilds the child-density time series when the Census Bureau publishes a new
+# ACS 5-year endyear (typically mid-December). Runs remotely on GitHub, so it no
+# longer depends on Josh's laptop being open. Cheap no-op if nothing new.
+#
+# Requires one repo secret: CENSUS_API_KEY
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+
+on:
+  schedule:
+    - cron: '0 13 15 12 *'   # Dec 15, ~08:00 ET
+    - cron: '0 13 15 1 *'    # Jan 15, ~08:00 ET (backup if the release lands late)
+  workflow_dispatch:          # lets you (or Claude) trigger a test run on demand
+
+permissions:
+  contents: write             # to push the rebuilt docs/ back to main
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install requests pandas geopandas
+      - name: Configure git identity
+        run: |
+          git config user.name "Josh Greenman"
+          git config user.email "josh.greenman@gmail.com"
+      - name: Run annual refresh
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+        run: bash scripts/annual_refresh.sh

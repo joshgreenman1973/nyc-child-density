@@ -7,9 +7,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-export CENSUS_API_KEY="$(security find-generic-password -s CENSUS_API_KEY -w 2>/dev/null || true)"
+# Prefer an already-set env var (GitHub Actions injects CENSUS_API_KEY from a
+# repo secret); fall back to the local login Keychain when run by hand/launchd.
+export CENSUS_API_KEY="${CENSUS_API_KEY:-$(security find-generic-password -s CENSUS_API_KEY -w 2>/dev/null || true)}"
 if [ -z "$CENSUS_API_KEY" ]; then
-  echo "CENSUS_API_KEY not found in keychain. Add it once with:" >&2
+  echo "CENSUS_API_KEY not set. In CI add it as a repo secret; locally add it once with:" >&2
   echo '  security add-generic-password -s CENSUS_API_KEY -a joshgreenman -w "<key>"' >&2
   exit 1
 fi
