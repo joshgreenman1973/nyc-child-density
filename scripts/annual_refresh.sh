@@ -19,6 +19,9 @@ fi
 python3 scripts/fetch_acs.py
 python3 scripts/fetch_totals.py
 python3 scripts/build_timeseries.py
+# Age bands are a separate output (docs/age_bands.json) and must be refreshed
+# in the same run, or the age-group chips stay a year behind the All view.
+python3 scripts/fetch_age_bands.py
 
 if git diff --quiet -- docs/; then
   echo "No changes to docs/ — nothing new published."

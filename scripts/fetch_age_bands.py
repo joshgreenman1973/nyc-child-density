@@ -1,6 +1,7 @@
 """
 Fetch child population broken into 4 age bands by tract, for every year
-between 2000 and 2023 where the data supports it.
+from 2000 forward where the data supports it. The latest ACS endyear is
+auto-detected, so a new Census release is picked up without editing this file.
 
 Bands: under 5, 5-9, 10-14, 15-17.
 
@@ -27,9 +28,12 @@ Output: docs/age_bands.json
 This is joined in the frontend against the existing under-18 time series.
 """
 
-import json, os, time
+import json, os, sys, time
 from pathlib import Path
 import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fetch_acs import latest_available_endyear
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -151,7 +155,12 @@ def main():
             per_year[year] = fetch_decennial(year)
             cache.write_text(json.dumps(per_year[year]))
 
-    for ey in range(2011, 2024):
+    # Upper bound is auto-detected so a new Census release is picked up without
+    # editing this file — mirrors fetch_acs.py / fetch_totals.py.
+    cached = sorted(int(p.stem.rsplit("_", 1)[1]) for p in DATA.glob("age_bands_acs_*.json"))
+    probe_start = (cached[-1] + 1) if cached else 2011
+    newest = latest_available_endyear(probe_start, KEY)
+    for ey in range(2011, max(newest, probe_start - 1) + 1):
         cache = DATA / f"age_bands_acs_{ey}.json"
         if cache.exists():
             print(f"  ACS {ey}: cached")
@@ -182,7 +191,7 @@ def main():
     print(f"  wrote {WEB/'age_bands.json'} ({len(tracts)} tracts)")
 
     # Sanity: print a band total for the earliest and latest complete years.
-    for y in [2000, 2010, 2020, 2023]:
+    for y in sorted({2000, 2010, 2020, max(years)}):
         if y not in years:
             continue
         totals = {b: 0 for b in BANDS}

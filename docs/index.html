@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Where the children went — NYC-area child density, 1970 to 2023</title>
+<title>Where the children went — NYC-area child density, 1970 to 2024</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,7 +49,7 @@
     margin: 0 0 16px; max-width: 22ch;
   }
   h1 .nobr { white-space: nowrap; }
-  h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  h1 em { font-style: normal; font-weight: 500; color: var(--accent); }
   .dek {
     font-family: "Fraunces", Georgia, serif;
     font-size: clamp(16px, 1.6vw, 20px); line-height: 1.45;
@@ -165,7 +165,7 @@
     font-family: "Fraunces", serif; font-size: 22px; line-height: 1.15;
     font-weight: 500; letter-spacing: -0.01em; margin: 0;
   }
-  .map-title .from { color: var(--muted); font-weight: 400; font-style: italic; }
+  .map-title .from { color: var(--muted); font-weight: 400; }
   .map-title .arrow { color: var(--muted); margin: 0 6px; }
   .map-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
   #map { height: 640px; }
@@ -361,22 +361,26 @@
       &middot;
       <a href="https://joshgreenman1973.github.io/nyc-senior-density/overlap.html" style="color:inherit;text-decoration:underline;text-decoration-color:var(--rule);">where they overlap</a>
     </div>
-    <h1><span class="nobr">Where the <em>children</em> went,</span><br>1970 to 2023</h1>
-    <p class="dek">In 2023, the five boroughs had <b id="dek-nyc">490,000</b> fewer children under 18
-      than in 1970 (<span id="dek-nyc-pct">−22%</span>); the bordering inner-ring counties in New York
+    <h1><span class="nobr">Where the <em>children</em> went,</span><br>1970 to <span class="js-latest-year">2024</span></h1>
+    <p class="dek">In <span class="js-latest-year">2024</span>, the five boroughs had <b id="dek-nyc">516,000</b> fewer children under 18
+      than in 1970 (<span id="dek-nyc-pct">−23%</span>); the bordering inner-ring counties in New York
       and New Jersey had <b id="dek-sub">443,000</b> fewer (<span id="dek-sub-pct">−27%</span>).
-      A few points of context: 1970 was the national baby-boom peak, and the U.S. under-18 count is
-      up only <b>5%</b> since (69.7M → 73.1M); the region's <em>total</em> population grew by about
-      <b>1.1 million</b> (+9%) over the same span; and the region's under-18 count has been roughly
-      flat since 1990 (<span id="dek-since1990">+8%</span>). The map below shows where the change
+      A few points of context: 1970 was the high-water mark for the U.S. child population, and the
+      national under-18 count is up only <b>5%</b> since (69.6M → 73.1M); the region's total
+      population grew by about
+      <b>1.2 million</b> (+9%) over the same span; and the region's under-18 count has been roughly
+      flat since 1990 (<span id="dek-since1990">+7%</span>). The map below shows where the change
       landed by neighborhood — losses are uneven, and a handful of neighborhoods more than doubled.</p>
     <p class="dek" style="margin-top:14px;border-top:1px solid var(--rule);padding-top:14px;font-size:15px;">
       <span style="font-family:'Inter',sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);font-weight:600;display:block;margin-bottom:6px;">Two things to keep in mind</span>
-      Births still outnumber kids aging out inside the five boroughs — natural change is
-      <b>positive</b>. The city is losing children because <b>families are moving out</b>, not
-      because fewer are being born. The inner-ring suburbs on this map gain some of those
-      families, but the kid-inflows here are much smaller than the city's kid-outflows — and
-      nationally, the only category with sustained under-five gains since 2020 is
+      Inside the five boroughs, births still outnumber deaths by a wide margin — cumulative natural
+      change 2011&ndash;2024 is <b>+668,000</b>. The city is losing children because
+      <b>families are moving out</b>, not because fewer are being born. The child pipeline itself is
+      close to break-even: the under-5 cohort works out to about 87,000 per single year of age
+      against roughly 84,000 17-year-olds aging out. The inner-ring counties on this map have picked up children
+      since 2020, but not over the longer run — from 2000 on they lost them too, so this is not a
+      simple city-to-suburb handoff. And nationally, the only category with sustained under-five
+      gains since 2020 is
       <a href="https://joshgreenman1973.github.io/young-child-geography/" style="color:inherit;text-decoration:underline;text-decoration-color:var(--rule);">Sun Belt exurbs</a>.
       Details in the <a href="#components" style="color:inherit;text-decoration:underline;text-decoration-color:var(--rule);">components panel</a> below.
     </p>
@@ -402,7 +406,7 @@
         <button class="chip measure-chip on" data-measure="density"
           data-tip="<b>Density</b> = children &divide; land area (kids per sq&nbsp;mi).<br><br>Highlights the most child-packed corners of the region &mdash; but the score is driven as much by <i>overall</i> housing density (high-rises vs. brownstones vs. single-family) as by whether the neighborhood is family-oriented. Midtown will look thin even if the few people who live there are mostly families.">Density <span style="color:var(--muted);font-weight:400">(kids per sq mi)</span></button>
         <button class="chip measure-chip" data-measure="share"
-          data-tip="<b>Share under 18</b> = children &divide; total population (a percent).<br><br>Controls for overall density. A tract with 5,000 kids and 25,000 adults scores the same (20%) as a tract with 500 kids and 2,500 adults. High numbers mean a neighborhood is <i>disproportionately</i> oriented to families with children, regardless of how dense the housing is.<br><br>Limited to 2000&ndash;2023 because pre-2000 total-population denominators aren&rsquo;t in the same pipeline.">Share under 18 <span style="color:var(--muted);font-weight:400">(% of total pop)</span></button>
+          data-tip="<b>Share under 18</b> = children &divide; total population (a percent).<br><br>Controls for overall density. A tract with 5,000 kids and 25,000 adults scores the same (20%) as a tract with 500 kids and 2,500 adults. High numbers mean a neighborhood is <i>disproportionately</i> oriented to families with children, regardless of how dense the housing is.<br><br>Limited to 2000 onward because pre-2000 total-population denominators aren&rsquo;t in the same pipeline.">Share under 18 <span style="color:var(--muted);font-weight:400">(% of total pop)</span></button>
         <span class="info-icon" data-tip="<b>Density</b> tells you <i>where the children physically are</i>. <b>Share</b> tells you <i>where children are over-represented</i>. They can disagree sharply: Manhattan&rsquo;s Upper East Side has high density of children (lots of families packed into tall buildings) but a low <i>share</i> (those buildings hold even more childless adults). Borough Park has high density <i>and</i> high share. Suburban Glen Rock has low density but a high share.">?</span>
         <span style="flex:1"></span>
         <span style="font-size:11px;color:var(--muted);" id="measure-note"></span>
@@ -422,11 +426,11 @@
       <!-- Delta-mode controls -->
       <div class="bar-row mode-only-delta" id="delta-row">
         <span class="bar-label">Years</span>
-        <button class="chip on" data-preset="1970,2023">1970 → 2023</button>
+        <button class="chip on" data-preset="1970,latest">1970 → <span class="js-latest-year">2024</span></button>
         <button class="chip" data-preset="1970,1990">1970 → 1990</button>
-        <button class="chip" data-preset="1990,2023">1990 → 2023</button>
-        <button class="chip" data-preset="2000,2023">2000 → 2023</button>
-        <button class="chip" data-preset="2010,2023">2010 → 2023</button>
+        <button class="chip" data-preset="1990,latest">1990 → <span class="js-latest-year">2024</span></button>
+        <button class="chip" data-preset="2000,latest">2000 → <span class="js-latest-year">2024</span></button>
+        <button class="chip" data-preset="2010,latest">2010 → <span class="js-latest-year">2024</span></button>
         <span class="bar-sep"></span>
         <span style="font-size:11px;color:var(--muted);">or pick</span>
         <select class="chip" id="from-year"></select>
@@ -435,7 +439,7 @@
         <span style="flex:1"></span>
         <span class="scrub" style="flex-basis:240px;">
           <span>Scrub end year</span>
-          <input type="range" id="scrub" min="1970" max="2023" step="1" value="2023">
+          <input type="range" id="scrub" min="1970" max="2024" step="1" value="2024">
         </span>
       </div>
 
@@ -446,7 +450,7 @@
         <span style="flex:1"></span>
         <span class="scrub" style="flex-basis:240px;">
           <span>Scrub year</span>
-          <input type="range" id="snap-scrub" min="1970" max="2023" step="1" value="2023">
+          <input type="range" id="snap-scrub" min="1970" max="2024" step="1" value="2024">
         </span>
       </div>
     </div>
@@ -459,14 +463,17 @@
         <span style="flex:1"></span>
         <span class="scrub" style="flex-basis:260px;">
           <span>Scrub</span>
-          <input type="range" id="band-scrub" min="2000" max="2023" step="1" value="2023">
+          <input type="range" id="band-scrub" min="2000" max="2024" step="1" value="2024">
         </span>
       </div>
       <div class="bar-row" style="padding-top:8px;border-top:1px dashed var(--rule);margin-top:4px;">
         <span style="font-size:11px;color:var(--muted);line-height:1.5;">
           <b style="color:var(--ink-soft);">Age-band view is a density snapshot only.</b>
           The underlying sources (decennial P12, ACS B01001) report age bands for 2000, 2010,
-          and 2011–2023 — no 2001–2009, no pre-2000. Year-over-year change is not shown
+          and 2011–<span class="js-latest-year">2024</span> — no 2001–2009, no pre-2000. Totals here run
+          about 10–11% below the "All (under 18)" totals for 2000 and for 2020 onward, because
+          tracts whose 2000/2020 codes have no 2010 counterpart are dropped rather than carried
+          forward; see the methodology. Year-over-year change is not shown
           because the two-decade gap would be misleading. Toggle back to <i>All (under 18)</i>
           to compare across history.
         </span>
@@ -477,7 +484,7 @@
   <div class="map-card">
     <div class="map-hed">
       <h2 class="map-title" id="map-title">
-        <span class="from">1970</span><span class="arrow">→</span><span>2023</span>
+        <span class="from">1970</span><span class="arrow">→</span><span class="js-latest-year">2024</span>
       </h2>
       <div class="map-sub" id="map-sub">Change in children per square mile, by 2010 census tract.
         Red = gain, blue = loss, white = within ±10%.
@@ -525,7 +532,13 @@
           <span class="leg"><span class="sw" style="background:#c9bfa7"></span>Homeschool</span>
         </div>
         <svg id="enroll-chart" viewBox="0 0 760 320" preserveAspectRatio="none"></svg>
-        <div class="chart-cap">Stacked K&ndash;12 enrollment in the five boroughs, 1940&ndash;2025. Pre-2000 values are historical estimates; post-2000 are direct state and city reporting.</div>
+        <div class="chart-cap">Stacked K&ndash;12 enrollment in the five boroughs, 1940&ndash;2025.
+          Pre-2000 values are historical estimates. Post-2000 values are compiled from state and
+          city reporting across five sectors that do not share a single reporting calendar or
+          definition, and the public and charter series here run a few percent above NYSED's
+          combined BEDS count for the same years; read the shape of the series rather than any
+          single year's level. The grade-level figures in the panel below come straight from NYSED
+          and are exact.</div>
       </div>
       <div class="enroll-stats">
         <div class="stat">
@@ -543,17 +556,20 @@
         <div class="stat stat-wide">
           <div class="stat-sub-hed">Since 2019</div>
           <div class="stat-sub-body">
-            Kindergarten enrollment is down <b>22%</b> and grade&nbsp;1 down <b>20%</b> — the steepest
-            drops are at the front end of the pipeline, not in the high-school grades, which points to
-            fewer births and out-migration of young families more than dropout or high-school exodus.
+            Kindergarten enrollment is down <b>14%</b> and grade&nbsp;1 down <b>14%</b> — from
+            77,481 and 80,741 in 2018&ndash;19 to 66,843 and 69,410 in 2024&ndash;25, on NYSED BEDS
+            counts for NYC public schools including charters. The drops sit at the front end of the
+            pipeline rather than in the high-school grades, which points to fewer births and
+            out-migration of young families more than dropout or high-school exodus.
           </div>
         </div>
         <div class="stat stat-wide">
           <div class="stat-sub-hed">Chronic absenteeism</div>
           <div class="stat-sub-body">
             The share of students missing 10%+ of school days rose from <b>26.5%</b> pre-pandemic
-            (2018&ndash;19) to a post-pandemic peak of <b>40%</b> (2021&ndash;22), and still sits at
-            <b>33%</b> in the preliminary 2024&ndash;25 Mayor&rsquo;s Management Report.
+            (2018&ndash;19) to a post-pandemic peak of <b>40%</b> (2021&ndash;22), eased to
+            <b>34.8%</b> in 2023&ndash;24, and still sat near <b>33%</b> in 2024&ndash;25 &mdash;
+            the fiscal 2025 Mayor&rsquo;s Management Report, released September 2025.
           </div>
         </div>
         <div class="stat-attr">
@@ -573,9 +589,11 @@
         Census county-level components-of-change. For each county in the study area we sum
         <b style="color:#2f6b3e;">natural change</b> (births minus deaths) and
         <b style="color:#2b6aa3;">net migration</b> (people moving in minus moving out) across
-        2011–2024. In the five boroughs, natural change is strongly positive; the population swing
-        comes from out-migration. In the inner-ring suburbs the contrast is smaller, but the same
-        story holds: migration is doing most of the work.
+        2011–2024. In the five boroughs, natural change is strongly positive (+668,000) but
+        out-migration is larger (−834,000), so the population swing comes from migration. The
+        inner-ring suburbs work the other way: natural change of +252,000 against net migration of
+        only −47,000, so their growth is births, not arrivals. Bergen and Union are the only two
+        counties on this map with positive net migration over the period.
       </p>
     </div>
     <div style="background:#fbf7ec;border:1px solid var(--rule);border-radius:4px;padding:18px 20px;">
@@ -592,10 +610,14 @@
         being born), per
         <a href="https://x.com/AzizSunderji/status/1924093066241540317" target="_blank" rel="noopener" style="color:var(--ink-soft);text-decoration:underline;text-decoration-color:var(--rule);">Aziz Sunderji's decomposition</a>
         using CDC WONDER. Where do those families go? We can't say from this data alone — we have
-        no origin-destination flows. What we <em>can</em> say: the inner-ring kid-inflows shown
-        here are far smaller than the city's kid-outflows, so most outflowing families end up
-        elsewhere. And nationally, the only category with sustained under-five gains since 2020
-        is Sun Belt exurbs (TX, NC, AZ, FL), per
+        no origin-destination flows, and the child counts on this map can't be netted against each
+        other to infer one. What the map does show: since 2020 the inner-ring counties gained about
+        21,000 children while the five boroughs lost about 23,000 — close to offsetting at the
+        margin. But stretch the window and that reading breaks down, because from 2000 to
+        <span class="js-latest-year">2024</span> the inner ring lost children too (−32,000),
+        alongside the city's −222,000. So the region is not simply moving its children from the
+        city to the counties next door. And nationally, the only category with sustained under-five
+        gains since 2020 is Sun Belt exurbs (TX, NC, AZ, FL), per
         <a href="https://joshgreenman1973.github.io/young-child-geography/" style="color:var(--ink-soft);text-decoration:underline;text-decoration-color:var(--rule);">the broader geography of young children</a>.
         A direct destination-by-destination measurement would require IRS SOI county-to-county
         migration files.
@@ -607,17 +629,30 @@
     <summary>Methodology</summary>
     <p><b>Data.</b> Decennial census counts of persons under 18 (NHGIS time-series table D08,
       "Persons by Age: Children and Adults") for 1970, 1980, 1990, 2000, 2010, and 2020. American
-      Community Survey 5-year estimates (B01001, sex by age) for endyears 2011 through 2023. Each
-      year between 2011 and 2023 is a measured ACS estimate, not an interpolation. Pre-2011 years
+      Community Survey 5-year estimates (B01001, sex by age) for endyears 2011 through
+      <span class="js-latest-year">2024</span>. Each year between 2011 and
+      <span class="js-latest-year">2024</span> is a measured ACS estimate, not an interpolation. Pre-2011 years
       between decennial anchors are linearly interpolated.</p>
     <p><b>Age-group filter.</b> The "Age group" chip row lets you restrict the map, totals, and
       ranked lists to one of four bands: under 5, 5&ndash;9, 10&ndash;14, or 15&ndash;17. Age-band
       counts come from decennial table P012 (2000 and 2010 SF1), P12 (2020 DHC), and ACS table
-      B01001 (2011&ndash;2023) — the under-18 totals used everywhere else are sums of the same
+      B01001 (2011&ndash;<span class="js-latest-year">2024</span>) — the under-18 totals used everywhere else are sums of the same
       underlying variables. Because NHGIS time-series table D08 only splits persons into
       "under 18" and "18+", the age-band view is only available from 2000 forward; pre-2000
       years and the 2001&ndash;2009 gap between decennials are simply not in the dataset.
       Age-band numbers are never interpolated — every reported year is a direct measurement.</p>
+    <p><b>Age-band totals do not match the under-18 totals, and here is why.</b> The age-band
+      figures join their source tract directly, by exact GEOID, with no fallback. For 2000, and for
+      every ACS year from 2020 on, the source is on 2000 or 2020 tract boundaries, and the tracts
+      whose codes have no 2010 counterpart are dropped outright. The under-18 series handles the
+      same tracts differently: it carries their last matching value forward (see caveat 3 below).
+      The result is that regional totals in age-band mode run about <b>10&ndash;11% lower</b> than
+      the "All (under 18)" total for the same year — a shortfall of roughly 313,000 children for
+      every year from 2020 forward, and 325,000 for 2000. For 2010 and for ACS 2011&ndash;2019,
+      where the source is already on 2010 boundaries, the two agree exactly. Read the age-band
+      totals as a consistent series for comparing bands and neighborhoods against each other, not
+      as a count of every child in the region. Fixing this properly needs a population-weighted
+      2020&rarr;2010 tract crosswalk, which is the same missing piece noted under normalization.</p>
     <p><b>Geography.</b> The study area is the five boroughs of New York City plus every county
       sharing a land or water border with NYC: Westchester and Nassau (NY); Bergen, Hudson, Union,
       and Middlesex (NJ). Everything is rendered on 2010 census tract boundaries. Tract polygons
@@ -645,9 +680,9 @@
       by the tract's total population and reports the result as a percent. This controls for
       population density — a tract with a lot of kids and a lot of adults has the same density score
       as a tract with a lot of kids and few adults, but a different share score. Denominators come
-      from decennial table P012/P12 (2000, 2010, 2020) and ACS table B01001 (endyears 2011–2023),
+      from decennial table P012/P12 (2000, 2010, 2020) and ACS table B01001 (endyears 2011–<span class="js-latest-year">2024</span>),
       interpolated linearly across the 2001–2009 gap. Because pre-2000 totals aren't available in
-      the same pipeline, the share view is restricted to the 2000–2023 window. In snapshot mode the
+      the same pipeline, the share view is restricted to the 2000–<span class="js-latest-year">2024</span> window. In snapshot mode the
       map colors a tract by its share-under-18; in delta mode the map colors by <i>percentage-point
       change</i> (e.g. a tract that went from 25% to 20% shows as −5 pp, not −20%). Tracts with
       fewer than 50 children or fewer than 200 people total are masked.</p>
@@ -682,17 +717,33 @@
       a housing project, the other half a park), the split gets an even allocation rather than a
       population-aware one. (2) ACS 5-year estimates carry margins of error at the tract level;
       the ranked lists should be read as order-of-magnitude, not precise. (3) Tract GEOIDs for
-      ACS endyears 2020 through 2023 use 2020 boundaries; where a 2020 GEOID differs from its
+      ACS endyears 2020 through <span class="js-latest-year">2024</span> use 2020 boundaries; where a 2020 GEOID differs from its
       2010 counterpart the ACS value joins the 2010 tract by exact string match and non-matching
       tracts hold their 2019 values. (4) The parks/cemeteries/landmarks clip relies on TIGER
       AREALM, which is incomplete in urban areas — many NYC parks and most NYC cemeteries are
       not in it. The low-count mask (above) compensates.</p>
-    <p><b>National comparison.</b> The 69.7 million figure for U.S. under-18 population in 1970 is
-      from the 1970 decennial census (table P-1, "Persons by age"). The 73.1 million figure for 2023
-      is from the Census Bureau's Vintage 2023 Population Estimates (national age/sex table
-      NC-EST2023-AGESEX). National under-18 population peaked in 1970 at about 69.7M, fell to a low
-      of about 63.6M in 1984 as the baby boom aged out, then climbed back to today's level on the
-      strength of millennial and Gen Alpha cohorts.</p>
+    <p><b>Regional total population.</b> The "+1.2 million (+9%)" figure in the introduction is the
+      change in the study area's total population between 1970 and
+      <span class="js-latest-year">2024</span>, computed from the same NHGIS time-series table used
+      for the child counts (D08: under-18 plus 18-and-over gives total persons), on an unfiltered
+      tract universe: 12,851,240 in 1970 to 14,004,331 in the 2020&ndash;<span class="js-latest-year">2024</span>
+      ACS 5-year, a gain of 1,153,091 (+9.0%). This is a wider universe than the map itself, which
+      drops tracts under 0.005 sq mi and those without a full time series, so the regional totals
+      shown on the chart are slightly lower. Pre-2000 totals are not otherwise in the pipeline,
+      which is why the "Share under 18" view starts at 2000.</p>
+    <p><b>National comparison.</b> The U.S. under-18 count for 1970 is 69.6 million, from the 1970
+      decennial census (Characteristics of the Population, U.S. Summary, table 52, as tabulated by
+      HHS/ASPE from Census sources). Other vintages of the same year put it at 69.7&ndash;69.8
+      million depending on whether the figure is the April 1 census count or a July 1 estimate; we
+      use the census count and round to 69.6M. The 73.1 million figure for
+      <span class="js-latest-year">2024</span> is from the Census Bureau's Vintage 2024 Population
+      Estimates (national age/sex file NC-EST2024-AGESEX), which puts the July 1,
+      <span class="js-latest-year">2024</span> under-18 population at 73,132,720. The decennial
+      series runs 69.6M (1970) &rarr; 63.7M (1980) &rarr; 63.6M (1990) &rarr; 72.3M (2000): the
+      child population fell as the baby boom aged out, bottomed around the mid-1980s (July 1
+      intercensal estimates dip to roughly 62.5M in 1984), and then climbed back on the strength of
+      the millennial echo. Note that 1970 is the peak of the U.S. <i>child population</i> &mdash;
+      not of the baby boom itself, whose births peaked in 1957.</p>
     <p><b>Sources.</b> U.S. Census Bureau via api.census.gov. IPUMS NHGIS, University of Minnesota:
       Schroeder, J., Van Riper, D., Manson, S., et al. IPUMS National Historical Geographic
       Information System, version 20.0. Minneapolis: IPUMS. 2025.
@@ -706,14 +757,18 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ---------- data ----------
-const YEAR_MIN = 1970, YEAR_MAX = 2023;
-const SHARE_YEAR_MIN = 2000;      // totals_timeseries.json covers 2000-2023 only
+// YEAR_MAX is a placeholder only. It is overwritten at boot from the last year
+// actually present in counts_timeseries.json, so a new ACS release flows through
+// the whole page (headline, presets, sliders, dek) without hand-editing.
+const YEAR_MIN = 1970;
+let YEAR_MAX = 2024;
+const SHARE_YEAR_MIN = 2000;      // totals_timeseries.json starts at 2000
 let BASE = null, TS = null, COUNTS = null, SUMMARY = null, NBHD = {};
 let AGEBANDS = null;             // loaded from age_bands.json (keyed by geoid)
-let TOTALS = null;               // loaded from totals_timeseries.json (keyed by gj, 2000-2023)
+let TOTALS = null;               // loaded from totals_timeseries.json (keyed by gj, 2000-YEAR_MAX)
 let AREA = {};                   // gisjoin -> land_sqmi (precomputed)
 let GEOID = {};                  // gisjoin -> geoid (precomputed)
-let state = { mode: "delta", from: 1970, to: 2023, band: "u18", measure: "density" };
+let state = { mode: "delta", from: 1970, to: YEAR_MAX, band: "u18", measure: "density" };
 const BAND_YEARS_SET = new Set();   // years available for non-u18 bands
 const BAND_LABEL = {
   u18: "under 18", u5: "under 5", "5_9": "5–9", "10_14": "10–14", "15_17": "15–17",
@@ -993,7 +1048,7 @@ function buildStoryMarkers() {
 }
 
 function storyPopupHtml(gj, s) {
-  const k0 = countAt(gj, 1970), k1 = countAt(gj, 2023);
+  const k0 = countAt(gj, 1970), k1 = countAt(gj, YEAR_MAX);
   const sign = (k1 - k0) > 0 ? "+" : "−";
   const absDiff = Math.abs(Math.round(k1 - k0)).toLocaleString();
   const colorVar = s.type === "gain" ? "var(--gain)" : "var(--loss)";
@@ -1006,7 +1061,7 @@ function storyPopupHtml(gj, s) {
       <div class="story-body">${s.body}</div>
       <div class="story-nums">
         <span>1970: <b>${k0 < 1 ? "&mdash;" : Math.round(k0).toLocaleString()}</b> kids</span>
-        <span>2023: <b>${Math.round(k1).toLocaleString()}</b> kids</span>
+        <span>${YEAR_MAX}: <b>${Math.round(k1).toLocaleString()}</b> kids</span>
         <span style="color:${colorVar}"><b>${sign}${absDiff}</b></span>
       </div>
     </div>
@@ -1171,7 +1226,7 @@ function renderTotals() {
     const s0 = regionShareAt(from), s1 = regionShareAt(to);
     if (s0 == null || s1 == null) {
       wrap.innerHTML = `<div class="big-num">—</div>
-        <div class="sub-num">Share data only available 2000–2023.</div>`;
+        <div class="sub-num">Share data only available ${SHARE_YEAR_MIN}–${YEAR_MAX}.</div>`;
       return;
     }
     const pts = s1 - s0;
@@ -1390,7 +1445,8 @@ function renderLegend() {
 
 // ---------- controls ----------
 // Year dropdowns
-const ANCHOR_YEARS = [1970, 1980, 1990, 2000, 2010, 2015, 2020, 2023];
+// Last entry is replaced with the real latest data year at boot.
+let ANCHOR_YEARS = [1970, 1980, 1990, 2000, 2010, 2015, 2020, YEAR_MAX];
 function populateYears() {
   const fy = document.getElementById("from-year");
   const ty = document.getElementById("to-year");
@@ -1400,8 +1456,8 @@ function populateYears() {
     ty.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
     if (sy) sy.insertAdjacentHTML("beforeend", `<option value="${y}">${y}</option>`);
   }
-  fy.value = "1970"; ty.value = "2023";
-  if (sy) sy.value = "2023";
+  fy.value = "1970"; ty.value = String(YEAR_MAX);
+  if (sy) sy.value = String(YEAR_MAX);
   fy.addEventListener("change", () => { state.from = +fy.value; clearPresetHighlight(); render(); });
   ty.addEventListener("change", () => { state.to = +ty.value; clearPresetHighlight(); render(); });
 }
@@ -1410,9 +1466,15 @@ function clearPresetHighlight() {
   document.querySelectorAll(".chip[data-preset]").forEach(c => c.classList.remove("on"));
 }
 
+// A preset's second year may be the literal token "latest", which resolves to
+// whatever the newest year in the data turns out to be.
+function presetYears(btn) {
+  return btn.dataset.preset.split(",").map(v => v === "latest" ? YEAR_MAX : Number(v));
+}
+
 document.querySelectorAll(".chip[data-preset]").forEach(btn => {
   btn.addEventListener("click", () => {
-    const [f, t] = btn.dataset.preset.split(",").map(Number);
+    const [f, t] = presetYears(btn);
     state.from = clampToBand(f);
     state.to = clampToBand(t);
     document.getElementById("from-year").value = state.from;
@@ -1524,7 +1586,7 @@ function updateYearOptions() {
 
 function updatePresetAvailability() {
   document.querySelectorAll(".chip[data-preset]").forEach(btn => {
-    const [f, t] = btn.dataset.preset.split(",").map(Number);
+    const [f, t] = presetYears(btn);
     let ok = (state.band === "u18") || (BAND_YEARS_SET.has(f) && BAND_YEARS_SET.has(t));
     if (ok && state.measure === "share") ok = (f >= SHARE_YEAR_MIN && t >= SHARE_YEAR_MIN);
     btn.disabled = !ok;
@@ -1550,7 +1612,7 @@ document.querySelectorAll(".chip.measure-chip").forEach(btn => {
       if (+document.getElementById("scrub").value < SHARE_YEAR_MIN) {
         document.getElementById("scrub").value = SHARE_YEAR_MIN;
       }
-      document.getElementById("measure-note").textContent = "Share data: 2000–2023 only.";
+      document.getElementById("measure-note").textContent = `Share data: ${SHARE_YEAR_MIN}–${YEAR_MAX} only.`;
     } else {
       document.getElementById("scrub").min = YEAR_MIN;
       document.getElementById("measure-note").textContent = "";
@@ -1634,7 +1696,8 @@ function applyMode(mode) {
   if (mode === "delta") {
     // Re-highlight the matching preset, if any.
     clearPresetHighlight();
-    const match = document.querySelector(`.chip[data-preset="${state.from},${state.to}"]`);
+    const match = Array.from(document.querySelectorAll(".chip[data-preset]"))
+      .find(btn => { const [f, t] = presetYears(btn); return f === state.from && t === state.to; });
     if (match) match.classList.add("on");
   } else {
     clearPresetHighlight();
@@ -1683,6 +1746,21 @@ if (snapScrub) {
   });
 }
 
+// Stamp the real latest data year into every place the page names it: the
+// headline, the dek, the preset labels, the range sliders and the page title.
+// Every one of those carries a placeholder in the markup that this overwrites.
+function applyLatestYearLabels() {
+  document.querySelectorAll(".js-latest-year")
+    .forEach(el => { el.textContent = String(YEAR_MAX); });
+  ["scrub", "snap-scrub", "band-scrub"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.max = String(YEAR_MAX);
+    if (+el.value > YEAR_MAX) el.value = String(YEAR_MAX);
+  });
+  document.title = `Where the children went — NYC-area child density, 1970 to ${YEAR_MAX}`;
+}
+
 // ---------- boot ----------
 Promise.all([
   fetch("tracts_base.geojson").then(r => r.json()),
@@ -1696,6 +1774,13 @@ Promise.all([
   BASE = base; TS = ts; COUNTS = counts; SUMMARY = summary; NBHD = nbhd || {};
   AGEBANDS = bands; TOTALS = totals;
   if (AGEBANDS) AGEBANDS.years.forEach(y => BAND_YEARS_SET.add(y));
+  // Adopt the real latest year from the data, then push it everywhere the page
+  // shows or defaults to "the most recent year."
+  YEAR_MAX = COUNTS.years[COUNTS.years.length - 1];
+  state.to = YEAR_MAX;
+  ANCHOR_YEARS = [1970, 1980, 1990, 2000, 2010, 2015, 2020, YEAR_MAX]
+    .filter((y, i, a) => a.indexOf(y) === i && y <= YEAR_MAX);
+  applyLatestYearLabels();
   BASE.features.forEach(f => {
     AREA[f.properties.gisjoin]  = f.properties.land_sqmi;
     GEOID[f.properties.gisjoin] = f.properties.geoid;
@@ -1710,11 +1795,11 @@ Promise.all([
   const NYC_COUNTIES = new Set(["005", "047", "061", "081", "085"]);
   let nyc70 = 0, nyc23 = 0, sub70 = 0, sub23 = 0;
   const y1970 = COUNTS.years.indexOf(1970);
-  const y2023 = COUNTS.years.indexOf(2023);
+  const yLatest = COUNTS.years.indexOf(YEAR_MAX);
   for (const gj in COUNTS.tracts) {
     const state = gj.slice(1, 3), county = gj.slice(4, 7);
     const arr = COUNTS.tracts[gj];
-    const v70 = arr[y1970], v23 = arr[y2023];
+    const v70 = arr[y1970], v23 = arr[yLatest];
     if (state === "36" && NYC_COUNTIES.has(county)) {
       nyc70 += v70; nyc23 += v23;
     } else {
@@ -1730,9 +1815,9 @@ Promise.all([
   document.getElementById("dek-nyc-pct").textContent = "\u2212" + nycPct + "%";
   document.getElementById("dek-sub-pct").textContent = "\u2212" + subPct + "%";
   // Regional under-18 delta since 1990 (a more "normal" baseline than the boom peak).
-  const t1990 = SUMMARY.total[1990], t2023 = SUMMARY.total[2023];
-  if (t1990 && t2023) {
-    const pct90 = Math.round(((t2023 - t1990) / t1990) * 100);
+  const t1990 = SUMMARY.total[1990], tLatest = SUMMARY.total[YEAR_MAX];
+  if (t1990 && tLatest) {
+    const pct90 = Math.round(((tLatest - t1990) / t1990) * 100);
     const sign = pct90 >= 0 ? "+" : "\u2212";
     document.getElementById("dek-since1990").textContent = sign + Math.abs(pct90) + "%";
   }
@@ -1815,7 +1900,7 @@ const ENROLL = [
   const peakX = xAt(years[peakIdx]), peakY = yAt(totals[peakIdx]);
   const ann = `
     <line x1="${peakX}" x2="${peakX}" y1="${peakY-4}" y2="${peakY-22}" stroke="#1a1915" stroke-width="0.7"/>
-    <text x="${peakX+6}" y="${peakY-14}" font-family="Fraunces,serif" font-size="11" fill="#1a1915" font-style="italic">1970 peak · 1.55M</text>
+    <text x="${peakX+6}" y="${peakY-14}" font-family="Fraunces,serif" font-size="11" fill="#1a1915">${years[peakIdx]} peak · ${(totals[peakIdx]/1000).toFixed(2)}M</text>
   `;
   svg.innerHTML = gridlines.join("") + parts.join("") + ann;
 

@@ -1,41 +1,101 @@
-import csv, json
-study = [
-    ("36","005","Bronx"),("36","047","Brooklyn (Kings)"),("36","061","Manhattan (NY)"),
-    ("36","081","Queens"),("36","085","Staten Is. (Richmond)"),
-    ("36","059","Nassau"),("36","119","Westchester"),
-    ("34","003","Bergen"),("34","017","Hudson"),("34","023","Middlesex"),("34","039","Union"),
+"""
+Build docs/components_of_change.json: cumulative natural change (births minus
+deaths) and net migration for each county in the study area, 2011-2024.
+
+Sources (downloaded on demand, so this is reproducible from a clean checkout):
+  - Vintage 2019 county estimates for 2011-2019 : NATURALINC<year>, NETMIG<year>
+  - Vintage 2024 county estimates for 2020-2024 : NATURALCHG<year>, NETMIG<year>
+
+The two vintages sit on different population bases (Vintage 2019 was never
+revised to the 2020 census), so the 2019/2020 seam is a real discontinuity.
+It is disclosed on the page; splicing is still the only way to get a continuous
+2011-2024 series out of published Census files.
+"""
+
+import csv
+import io
+import json
+from pathlib import Path
+
+import requests
+
+ROOT = Path(__file__).resolve().parent.parent
+WEB = ROOT / "docs"
+
+V2019_URL = ("https://www2.census.gov/programs-surveys/popest/datasets/"
+             "2010-2019/counties/totals/co-est2019-alldata.csv")
+V2024_URL = ("https://www2.census.gov/programs-surveys/popest/datasets/"
+             "2020-2024/counties/totals/co-est2024-alldata.csv")
+
+NYC_FIPS = {"36005", "36047", "36061", "36081", "36085"}
+
+STUDY = [
+    ("36", "005", "Bronx"), ("36", "047", "Brooklyn (Kings)"),
+    ("36", "061", "Manhattan (NY)"), ("36", "081", "Queens"),
+    ("36", "085", "Staten Is. (Richmond)"), ("36", "059", "Nassau"),
+    ("36", "119", "Westchester"), ("34", "003", "Bergen"),
+    ("34", "017", "Hudson"), ("34", "023", "Middlesex"), ("34", "039", "Union"),
 ]
-out = {c[2]:{"fips":c[0]+c[1],"group":("nyc" if c[0]+c[1] in {"36005","36047","36061","36081","36085"} else "suburb"),"years":{}} for c in study}
 
-# 2010-2019 file
-with open("/tmp/co-est2019.csv", encoding="latin-1") as f:
-    r = csv.DictReader(f)
-    for row in r:
-        key = (row["STATE"], row["COUNTY"])
-        for c in study:
-            if (c[0], c[1]) == key:
-                for y in range(2011, 2020):
-                    out[c[2]]["years"][str(y)] = {
-                        "natural": int(row[f"NATURALINC{y}"]),
-                        "netmig":  int(row[f"NETMIG{y}"]),
-                    }
-# 2020-2024 file
-with open("/tmp/co-est.csv", encoding="latin-1") as f:
-    r = csv.DictReader(f)
-    for row in r:
-        key = (row["STATE"], row["COUNTY"])
-        for c in study:
-            if (c[0], c[1]) == key:
-                for y in range(2020, 2025):
-                    out[c[2]]["years"][str(y)] = {
-                        "natural": int(row[f"NATURALCHG{y}"]),
-                        "netmig":  int(row[f"NETMIG{y}"]),
-                    }
+FIRST_YEAR, SEAM, LAST_YEAR = 2011, 2020, 2024
 
-# Cumulative 2011-2024
-for name, d in out.items():
-    nat = sum(d["years"][str(y)]["natural"] for y in range(2011,2025))
-    mig = sum(d["years"][str(y)]["netmig"] for y in range(2011,2025))
-    d["cum"] = {"natural": nat, "netmig": mig, "total": nat+mig}
 
-print(json.dumps(out, indent=2))
+def fetch_csv(url):
+    """Download a Census estimates CSV. Fails loud: an empty or truncated
+    response must not quietly produce a zeroed-out chart."""
+    r = requests.get(url, timeout=180)
+    r.raise_for_status()
+    if len(r.content) < 100_000:
+        raise SystemExit(f"{url} returned only {len(r.content)} bytes — refusing "
+                         "to build components from a truncated file.")
+    return list(csv.DictReader(io.StringIO(r.content.decode("latin-1"))))
+
+
+def main():
+    out = {
+        name: {
+            "fips": st + co,
+            "group": "nyc" if st + co in NYC_FIPS else "suburb",
+            "years": {},
+        }
+        for st, co, name in STUDY
+    }
+    by_fips = {st + co: name for st, co, name in STUDY}
+
+    for url, years, nat_col in [
+        (V2019_URL, range(FIRST_YEAR, SEAM), "NATURALINC"),
+        (V2024_URL, range(SEAM, LAST_YEAR + 1), "NATURALCHG"),
+    ]:
+        print(f"fetching {url.rsplit('/', 1)[1]}...")
+        seen = set()
+        for row in fetch_csv(url):
+            fips = row["STATE"] + row["COUNTY"]
+            name = by_fips.get(fips)
+            if not name:
+                continue
+            seen.add(fips)
+            for y in years:
+                out[name]["years"][str(y)] = {
+                    "natural": int(row[f"{nat_col}{y}"]),
+                    "netmig": int(row[f"NETMIG{y}"]),
+                }
+        missing = set(by_fips) - seen
+        if missing:
+            raise SystemExit(f"counties missing from {url}: {sorted(missing)}")
+
+    for name, d in out.items():
+        nat = sum(d["years"][str(y)]["natural"] for y in range(FIRST_YEAR, LAST_YEAR + 1))
+        mig = sum(d["years"][str(y)]["netmig"] for y in range(FIRST_YEAR, LAST_YEAR + 1))
+        d["cum"] = {"natural": nat, "netmig": mig, "total": nat + mig}
+
+    (WEB / "components_of_change.json").write_text(json.dumps(out, indent=2))
+    print(f"wrote {WEB / 'components_of_change.json'} ({len(out)} counties)")
+
+    for grp in ["nyc", "suburb"]:
+        nat = sum(v["cum"]["natural"] for v in out.values() if v["group"] == grp)
+        mig = sum(v["cum"]["netmig"] for v in out.values() if v["group"] == grp)
+        print(f"  {grp:7} natural {nat:+,}  netmig {mig:+,}  net {nat + mig:+,}")
+
+
+if __name__ == "__main__":
+    main()
