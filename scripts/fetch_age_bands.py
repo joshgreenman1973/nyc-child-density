@@ -9,11 +9,11 @@ Sources:
   - 2000 decennial SF1, table P012 (male 003-006, female 027-030)
   - 2010 decennial SF1, table P012 (same layout)
   - 2020 decennial DHC, table P12 (renamed to P12_003N etc.)
-  - 2011-2023 ACS 5-year, table B01001 (male 003-006, female 027-030)
+  - 2011-latest ACS 5-year, table B01001 (male 003-006, female 027-030)
 
 Output: docs/age_bands.json
   {
-    "years": [2000, 2010, 2020, 2011, 2012, ..., 2023],
+    "years": [2000, 2010, 2020, 2011, 2012, ..., latest],
     "bands": ["u5", "5_9", "10_14", "15_17"],
     "tracts": {
       "<geoid>": {
@@ -33,6 +33,7 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import census_http
 from fetch_acs import latest_available_endyear
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -87,7 +88,7 @@ def fetch_decennial(year):
         for county in counties:
             params = {"get": get, "for": "tract:*",
                       "in": f"state:{state} county:{county}", "key": KEY}
-            r = requests.get(base, params=params, timeout=60)
+            r = census_http.get(base, params=params, timeout=60)
             r.raise_for_status()
             header, *body = r.json()
             for row in body:
@@ -116,7 +117,7 @@ def fetch_acs(endyear):
         for county in counties:
             params = {"get": get, "for": "tract:*",
                       "in": f"state:{state} county:{county}", "key": KEY}
-            r = requests.get(base, params=params, timeout=60)
+            r = census_http.get(base, params=params, timeout=60)
             if r.status_code != 200:
                 print(f"   {endyear} {state}{county}: HTTP {r.status_code}")
                 continue

@@ -28,6 +28,7 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import census_http
 from census_vintage import COUNTY_URL, latest_vintage
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -54,7 +55,7 @@ FIRST_YEAR, SEAM = 2011, 2020
 def fetch_csv(url):
     """Download a Census estimates CSV. Fails loud: an empty or truncated
     response must not quietly produce a zeroed-out chart."""
-    r = requests.get(url, timeout=180)
+    r = census_http.get(url, timeout=180)
     r.raise_for_status()
     if len(r.content) < 100_000:
         raise SystemExit(f"{url} returned only {len(r.content)} bytes — refusing "

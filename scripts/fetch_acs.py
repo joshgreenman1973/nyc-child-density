@@ -12,9 +12,12 @@ is on 2020 tracts - we handle that below by writing GEOID as-is and letting
 the build step crosswalk.
 """
 
-import json, os, time
+import json, os, sys, time
 from pathlib import Path
 import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import census_http
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -76,7 +79,7 @@ def fetch_year(endyear):
                 "in": f"state:{state} county:{county}",
                 "key": KEY,
             }
-            r = requests.get(base, params=params, timeout=60)
+            r = census_http.get(base, params=params, timeout=60)
             if r.status_code != 200:
                 print(f"   {endyear} {state}{county}: HTTP {r.status_code}: {r.text[:120]}")
                 continue

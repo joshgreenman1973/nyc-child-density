@@ -28,6 +28,9 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import census_http
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fetch_acs import latest_available_endyear
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -62,7 +65,7 @@ def fetch_decennial(year):
                 "in": f"state:{state} county:{county}",
                 "key": KEY,
             }
-            r = requests.get(base, params=params, timeout=60)
+            r = census_http.get(base, params=params, timeout=60)
             r.raise_for_status()
             header, *body = r.json()
             for row in body:
@@ -96,7 +99,7 @@ def fetch_acs(endyear):
                 "in": f"state:{state} county:{county}",
                 "key": KEY,
             }
-            r = requests.get(base, params=params, timeout=60)
+            r = census_http.get(base, params=params, timeout=60)
             if r.status_code != 200:
                 print(f"   {endyear} {state}{county}: HTTP {r.status_code}")
                 continue

@@ -31,6 +31,7 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import census_http
 from census_vintage import NATIONAL_URL, latest_vintage
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -42,7 +43,7 @@ BASE_1970 = 69_600_000
 def main():
     vintage, url = latest_vintage(NATIONAL_URL)
     print(f"newest national vintage: {vintage}")
-    r = requests.get(url, timeout=180)
+    r = census_http.get(url, timeout=180)
     r.raise_for_status()
     if len(r.content) < 5_000:
         raise SystemExit(f"{url} returned only {len(r.content)} bytes — refusing "
