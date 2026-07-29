@@ -779,5 +779,10 @@
       "netmig": 7455,
       "total": 45059
     }
+  },
+  "_meta": {
+    "vintage": 2025,
+    "first_year": 2011,
+    "last_year": 2025
   }
 }

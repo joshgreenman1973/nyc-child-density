@@ -1,16 +1,26 @@
-name: Annual ACS refresh
+name: Census data refresh
 
-# Rebuilds the child-density time series when the Census Bureau publishes a new
-# ACS 5-year endyear (typically mid-December). Runs remotely on GitHub, so it no
-# longer depends on Josh's laptop being open. Cheap no-op if nothing new.
+# Rebuilds the child-density site inputs when the Census publishes new data.
+# Runs remotely on GitHub, so it does not depend on Josh's laptop being open.
+# Cheap no-op if nothing new.
+#
+# Two schedules because the page runs on two Census clocks:
+#   December/January — new ACS 5-year endyear, which is the map itself.
+#   March/April      — new population-estimates vintage, which drives the
+#                      national under-18 figure and the components chart. These
+#                      vintages REVISE prior years, so skipping them leaves
+#                      superseded numbers on the page even though nothing
+#                      "new" appears to be missing.
 #
 # Requires one repo secret: CENSUS_API_KEY
 #   Settings -> Secrets and variables -> Actions -> New repository secret
 
 on:
   schedule:
-    - cron: '0 13 15 12 *'   # Dec 15, ~08:00 ET
-    - cron: '0 13 15 1 *'    # Jan 15, ~08:00 ET (backup if the release lands late)
+    - cron: '0 13 15 12 *'   # Dec 15, ~08:00 ET — ACS 5-year release
+    - cron: '0 13 15 1 *'    # Jan 15, ~08:00 ET — backup if ACS lands late
+    - cron: '0 13 20 3 *'    # Mar 20, ~09:00 ET — county/national estimates vintage
+    - cron: '0 13 20 4 *'    # Apr 20, ~09:00 ET — backup if the vintage lands late
   workflow_dispatch:          # lets you (or Claude) trigger a test run on demand
 
 permissions:

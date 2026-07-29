@@ -1,36 +1,40 @@
 """
 Build docs/components_of_change.json: cumulative natural change (births minus
-deaths) and net migration for each county in the study area, 2011-2025.
+deaths) and net migration for each county in the study area, 2011 to the
+newest published Census vintage.
 
 Sources (downloaded on demand, so this is reproducible from a clean checkout):
   - Vintage 2019 county estimates for 2011-2019 : NATURALINC<year>, NETMIG<year>
-  - Vintage 2025 county estimates for 2020-2025 : NATURALCHG<year>, NETMIG<year>
+  - Newest county vintage for 2020-onward       : NATURALCHG<year>, NETMIG<year>
 
 The two vintages sit on different population bases (Vintage 2019 was never
 revised to the 2020 census), so the 2019/2020 seam is a real discontinuity.
 It is disclosed on the page; splicing is still the only way to get a continuous
 series out of published Census files.
 
-Always take the post-2020 half from the NEWEST published vintage, not the one
-that happens to match the map's ACS endyear. Each vintage revises the previous
-one, sometimes materially: Vintage 2025 moved the national under-18 count for
-2024 down by roughly 580,000 from what Vintage 2024 reported.
+The post-2020 half is taken from the NEWEST published vintage, detected at
+runtime by census_vintage.latest_vintage — not the vintage matching the map's
+ACS endyear. Each vintage revises the previous one, sometimes materially:
+Vintage 2025 moved the national under-18 count for 2024 down by roughly 580,000
+from what Vintage 2024 reported.
 """
 
 import csv
 import io
 import json
+import sys
 from pathlib import Path
 
 import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from census_vintage import COUNTY_URL, latest_vintage
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "docs"
 
 V2019_URL = ("https://www2.census.gov/programs-surveys/popest/datasets/"
              "2010-2019/counties/totals/co-est2019-alldata.csv")
-V2025_URL = ("https://www2.census.gov/programs-surveys/popest/datasets/"
-             "2020-2025/counties/totals/co-est2025-alldata.csv")
 
 NYC_FIPS = {"36005", "36047", "36061", "36081", "36085"}
 
@@ -42,7 +46,9 @@ STUDY = [
     ("34", "017", "Hudson"), ("34", "023", "Middlesex"), ("34", "039", "Union"),
 ]
 
-FIRST_YEAR, SEAM, LAST_YEAR = 2011, 2020, 2025
+# FIRST_YEAR and SEAM are fixed by the source layout. LAST_YEAR is whatever the
+# newest county vintage reaches, resolved at runtime.
+FIRST_YEAR, SEAM = 2011, 2020
 
 
 def fetch_csv(url):
@@ -57,6 +63,10 @@ def fetch_csv(url):
 
 
 def main():
+    vintage, county_url = latest_vintage(COUNTY_URL)
+    last_year = vintage
+    print(f"newest county vintage: {vintage} — building {FIRST_YEAR}-{last_year}")
+
     out = {
         name: {
             "fips": st + co,
@@ -69,7 +79,7 @@ def main():
 
     for url, years, nat_col in [
         (V2019_URL, range(FIRST_YEAR, SEAM), "NATURALINC"),
-        (V2025_URL, range(SEAM, LAST_YEAR + 1), "NATURALCHG"),
+        (county_url, range(SEAM, last_year + 1), "NATURALCHG"),
     ]:
         print(f"fetching {url.rsplit('/', 1)[1]}...")
         seen = set()
@@ -89,16 +99,17 @@ def main():
             raise SystemExit(f"counties missing from {url}: {sorted(missing)}")
 
     for name, d in out.items():
-        nat = sum(d["years"][str(y)]["natural"] for y in range(FIRST_YEAR, LAST_YEAR + 1))
-        mig = sum(d["years"][str(y)]["netmig"] for y in range(FIRST_YEAR, LAST_YEAR + 1))
+        nat = sum(d["years"][str(y)]["natural"] for y in range(FIRST_YEAR, last_year + 1))
+        mig = sum(d["years"][str(y)]["netmig"] for y in range(FIRST_YEAR, last_year + 1))
         d["cum"] = {"natural": nat, "netmig": mig, "total": nat + mig}
 
+    out["_meta"] = {"vintage": vintage, "first_year": FIRST_YEAR, "last_year": last_year}
     (WEB / "components_of_change.json").write_text(json.dumps(out, indent=2))
-    print(f"wrote {WEB / 'components_of_change.json'} ({len(out)} counties)")
+    print(f"wrote {WEB / 'components_of_change.json'} ({len(out) - 1} counties, through {last_year})")
 
     for grp in ["nyc", "suburb"]:
-        nat = sum(v["cum"]["natural"] for v in out.values() if v["group"] == grp)
-        mig = sum(v["cum"]["netmig"] for v in out.values() if v["group"] == grp)
+        nat = sum(v["cum"]["natural"] for v in out.values() if v.get("group") == grp)
+        mig = sum(v["cum"]["netmig"] for v in out.values() if v.get("group") == grp)
         print(f"  {grp:7} natural {nat:+,}  netmig {mig:+,}  net {nat + mig:+,}")
 
 

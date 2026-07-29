@@ -1,9 +1,18 @@
 #!/bin/bash
-# Annual refresh: pull the newest ACS 5-year estimates (fetch_acs.py and
-# fetch_totals.py both auto-detect the latest published endyear), rebuild the
-# web time series, and push if anything changed. Meant to run via launchd
-# once a year in December, when the Census Bureau typically releases the next
-# ACS 5-year endyear. Cheap no-op if no new endyear is published yet.
+# Refresh whatever the Census has newly published, rebuild the site inputs, and
+# push if anything changed. Cheap no-op when nothing new is out.
+#
+# The page runs on TWO Census clocks and they do not tick together:
+#
+#   ACS 5-year tract data  -> the map itself. New endyear each December.
+#   Population estimates   -> the national under-18 context figure and the
+#                             components-of-change chart. New vintage lands
+#                             earlier in the year, and each vintage REVISES the
+#                             previous one, sometimes by hundreds of thousands.
+#
+# So this runs on both a December and a March schedule. Every script here
+# auto-detects the newest data it can find, so running the whole thing on
+# either date is safe: the half with nothing new simply reports "cached".
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -16,12 +25,21 @@ if [ -z "$CENSUS_API_KEY" ]; then
   exit 1
 fi
 
+# --- ACS half: the map (needs the API key) --------------------------------
 python3 scripts/fetch_acs.py
 python3 scripts/fetch_totals.py
 python3 scripts/build_timeseries.py
-# Age bands are a separate output (docs/age_bands.json) and must be refreshed
-# in the same run, or the age-group chips stay a year behind the All view.
+# Age bands are a separate output (docs/age_bands.json) and must run AFTER
+# build_timeseries.py, which writes the tracts_base.geojson they join against.
+# Without this the age-group chips stay a year behind the All view.
 python3 scripts/fetch_age_bands.py
+
+# --- Estimates half: national context + components chart ------------------
+# These read static files from www2.census.gov and need no API key. Both probe
+# for the newest vintage rather than a pinned year, so the March run picks up
+# new data without anyone editing a constant.
+python3 scripts/fetch_national.py
+python3 scripts/build_components.py
 
 if git diff --quiet -- docs/; then
   echo "No changes to docs/ — nothing new published."
@@ -31,6 +49,6 @@ fi
 git config user.name "Josh Greenman"
 git config user.email "josh.greenman@gmail.com"
 git add docs/
-git commit -m "Auto-refresh: new ACS endyear $(date +%Y-%m-%d)"
+git commit -m "Auto-refresh: newest Census data as of $(date +%Y-%m-%d)"
 git push origin HEAD
 echo "Pushed refreshed child-density data."
