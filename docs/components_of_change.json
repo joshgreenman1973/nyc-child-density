@@ -40,30 +40,34 @@
         "netmig": -22506
       },
       "2020": {
-        "natural": -2723,
-        "netmig": -9434
+        "natural": -2716,
+        "netmig": -7921
       },
       "2021": {
-        "natural": 5555,
-        "netmig": -42120
+        "natural": 5606,
+        "netmig": -43063
       },
       "2022": {
-        "natural": 6039,
-        "netmig": -45326
+        "natural": 6013,
+        "netmig": -46360
       },
       "2023": {
-        "natural": 6504,
-        "netmig": -16185
+        "natural": 6312,
+        "netmig": -10578
       },
       "2024": {
-        "natural": 6743,
-        "netmig": 2705
+        "natural": 6237,
+        "netmig": 19056
+      },
+      "2025": {
+        "natural": 6220,
+        "netmig": -5925
       }
     },
     "cum": {
-      "natural": 125223,
-      "netmig": -183455,
-      "total": -58232
+      "natural": 130777,
+      "netmig": -167886,
+      "total": -37109
     }
   },
   "Brooklyn (Kings)": {
@@ -107,30 +111,34 @@
         "netmig": -37742
       },
       "2020": {
-        "natural": -2701,
-        "netmig": -15707
+        "natural": -2763,
+        "netmig": -10993
       },
       "2021": {
-        "natural": 14736,
-        "netmig": -91543
+        "natural": 14727,
+        "netmig": -95761
       },
       "2022": {
-        "natural": 15927,
-        "netmig": -55360
+        "natural": 15962,
+        "netmig": -52050
       },
       "2023": {
-        "natural": 15516,
-        "netmig": -19190
+        "natural": 16767,
+        "netmig": -5894
       },
       "2024": {
-        "natural": 15400,
-        "netmig": 9511
+        "natural": 17117,
+        "netmig": 29704
+      },
+      "2025": {
+        "natural": 16835,
+        "netmig": -21283
       }
     },
     "cum": {
-      "natural": 280200,
-      "netmig": -343040,
-      "total": -62840
+      "natural": 299967,
+      "netmig": -327028,
+      "total": -27061
     }
   },
   "Manhattan (NY)": {
@@ -174,30 +182,34 @@
         "netmig": -5003
       },
       "2020": {
-        "natural": -1750,
-        "netmig": -11703
+        "natural": -1713,
+        "netmig": -6014
       },
       "2021": {
-        "natural": 2050,
-        "netmig": -97251
+        "natural": 2202,
+        "netmig": -108934
       },
       "2022": {
-        "natural": 2992,
-        "netmig": 17000
+        "natural": 2984,
+        "netmig": 19896
       },
       "2023": {
-        "natural": 2676,
-        "netmig": 33166
+        "natural": 2827,
+        "netmig": 34625
       },
       "2024": {
-        "natural": 2588,
-        "netmig": 24881
+        "natural": 3327,
+        "netmig": 30720
+      },
+      "2025": {
+        "natural": 2898,
+        "netmig": -3582
       }
     },
     "cum": {
-      "natural": 79339,
-      "netmig": -64302,
-      "total": 15037
+      "natural": 83308,
+      "netmig": -63684,
+      "total": 19624
     }
   },
   "Queens": {
@@ -241,30 +253,34 @@
         "netmig": -31906
       },
       "2020": {
-        "natural": -4315,
-        "netmig": -10563
+        "natural": -4502,
+        "netmig": -14024
       },
       "2021": {
-        "natural": 6741,
-        "netmig": -64588
+        "natural": 6626,
+        "netmig": -59880
       },
       "2022": {
-        "natural": 7887,
-        "netmig": -53425
+        "natural": 7880,
+        "netmig": -48410
       },
       "2023": {
-        "natural": 8581,
-        "netmig": 490
+        "natural": 8856,
+        "netmig": 14299
       },
       "2024": {
-        "natural": 9031,
-        "netmig": 13219
+        "natural": 9216,
+        "netmig": 42867
+      },
+      "2025": {
+        "natural": 9150,
+        "netmig": -17777
       }
     },
     "cum": {
-      "natural": 164701,
-      "netmig": -232983,
-      "total": -68282
+      "natural": 174002,
+      "netmig": -201041,
+      "total": -27039
     }
   },
   "Staten Is. (Richmond)": {
@@ -308,30 +324,34 @@
         "netmig": -1291
       },
       "2020": {
-        "natural": -635,
-        "netmig": -592
+        "natural": -610,
+        "netmig": -583
       },
       "2021": {
-        "natural": 608,
-        "netmig": -1914
+        "natural": 630,
+        "netmig": -1897
       },
       "2022": {
-        "natural": 871,
-        "netmig": -2183
+        "natural": 879,
+        "netmig": -2303
       },
       "2023": {
-        "natural": 901,
-        "netmig": 1274
+        "natural": 885,
+        "netmig": 1740
       },
       "2024": {
-        "natural": 865,
-        "netmig": 2543
+        "natural": 1009,
+        "netmig": 3364
+      },
+      "2025": {
+        "natural": 998,
+        "netmig": 673
       }
     },
     "cum": {
-      "natural": 18359,
-      "netmig": -10006,
-      "total": 8353
+      "natural": 19540,
+      "netmig": -8140,
+      "total": 11400
     }
   },
   "Nassau": {
@@ -375,30 +395,34 @@
         "netmig": -3291
       },
       "2020": {
-        "natural": -2339,
-        "netmig": -2781
+        "natural": -2267,
+        "netmig": -2480
       },
       "2021": {
-        "natural": 1731,
-        "netmig": -1154
+        "natural": 1720,
+        "netmig": -1821
       },
       "2022": {
-        "natural": 2496,
-        "netmig": -7769
+        "natural": 2500,
+        "netmig": -5907
       },
       "2023": {
-        "natural": 2752,
-        "netmig": -3636
+        "natural": 2366,
+        "netmig": -1919
       },
       "2024": {
-        "natural": 3092,
-        "netmig": 3230
+        "natural": 2708,
+        "netmig": 6087
+      },
+      "2025": {
+        "natural": 2789,
+        "netmig": -1736
       }
     },
     "cum": {
-      "natural": 36413,
-      "netmig": -25032,
-      "total": 11381
+      "natural": 38497,
+      "netmig": -20698,
+      "total": 17799
     }
   },
   "Westchester": {
@@ -442,30 +466,34 @@
         "netmig": -3330
       },
       "2020": {
-        "natural": -1278,
-        "netmig": -1761
+        "natural": -1255,
+        "netmig": -1765
       },
       "2021": {
-        "natural": 1815,
-        "netmig": -3771
+        "natural": 1781,
+        "netmig": -3571
       },
       "2022": {
-        "natural": 2388,
-        "netmig": -9284
+        "natural": 2368,
+        "netmig": -8668
       },
       "2023": {
-        "natural": 2632,
-        "netmig": 762
+        "natural": 2431,
+        "netmig": 1549
       },
       "2024": {
-        "natural": 3202,
-        "netmig": 6269
+        "natural": 3012,
+        "netmig": 7828
+      },
+      "2025": {
+        "natural": 3172,
+        "netmig": 3312
       }
     },
     "cum": {
-      "natural": 39435,
-      "netmig": -21287,
-      "total": 18148
+      "natural": 42185,
+      "netmig": -14817,
+      "total": 27368
     }
   },
   "Bergen": {
@@ -509,30 +537,34 @@
         "netmig": -2530
       },
       "2020": {
-        "natural": -1381,
-        "netmig": -766
+        "natural": -1339,
+        "netmig": -667
       },
       "2021": {
-        "natural": 1326,
-        "netmig": -127
+        "natural": 1321,
+        "netmig": -430
       },
       "2022": {
-        "natural": 1834,
-        "netmig": -3
+        "natural": 1828,
+        "netmig": -813
       },
       "2023": {
-        "natural": 2139,
-        "netmig": 7213
+        "natural": 1865,
+        "netmig": 6082
       },
       "2024": {
-        "natural": 1966,
-        "netmig": 10155
+        "natural": 2016,
+        "netmig": 7313
+      },
+      "2025": {
+        "natural": 2022,
+        "netmig": 1459
       }
     },
     "cum": {
-      "natural": 25458,
-      "netmig": 23310,
-      "total": 48768
+      "natural": 27287,
+      "netmig": 19782,
+      "total": 47069
     }
   },
   "Hudson": {
@@ -576,30 +608,34 @@
         "netmig": -5164
       },
       "2020": {
-        "natural": -99,
-        "netmig": -2847
+        "natural": -168,
+        "netmig": -2899
       },
       "2021": {
-        "natural": 4563,
-        "netmig": -21660
+        "natural": 4487,
+        "netmig": -21642
       },
       "2022": {
-        "natural": 4892,
-        "netmig": 502
+        "natural": 4867,
+        "netmig": -109
       },
       "2023": {
-        "natural": 4884,
-        "netmig": 7915
+        "natural": 5001,
+        "netmig": 6993
       },
       "2024": {
-        "natural": 4317,
-        "netmig": 10622
+        "natural": 4853,
+        "netmig": 6441
+      },
+      "2025": {
+        "natural": 4710,
+        "netmig": -631
       }
     },
     "cum": {
-      "natural": 75984,
-      "netmig": -26376,
-      "total": 49608
+      "natural": 81177,
+      "netmig": -32755,
+      "total": 48422
     }
   },
   "Middlesex": {
@@ -643,30 +679,34 @@
         "netmig": -3776
       },
       "2020": {
-        "natural": -660,
-        "netmig": -1179
+        "natural": -664,
+        "netmig": -1368
       },
       "2021": {
-        "natural": 1542,
-        "netmig": -1037
+        "natural": 1466,
+        "netmig": -1319
       },
       "2022": {
-        "natural": 2175,
-        "netmig": 1515
+        "natural": 2164,
+        "netmig": 412
       },
       "2023": {
-        "natural": 2382,
-        "netmig": 7422
+        "natural": 2265,
+        "netmig": 6415
       },
       "2024": {
-        "natural": 2436,
-        "netmig": 11503
+        "natural": 2338,
+        "netmig": 5929
+      },
+      "2025": {
+        "natural": 2409,
+        "netmig": -699
       }
     },
     "cum": {
-      "natural": 40581,
-      "netmig": -511,
-      "total": 40070
+      "natural": 42684,
+      "netmig": -9365,
+      "total": 33319
     }
   },
   "Union": {
@@ -710,30 +750,34 @@
         "netmig": -2629
       },
       "2020": {
-        "natural": -681,
-        "netmig": -1025
+        "natural": -733,
+        "netmig": -1121
       },
       "2021": {
-        "natural": 1892,
-        "netmig": -2826
+        "natural": 1819,
+        "netmig": -2947
       },
       "2022": {
-        "natural": 2422,
-        "netmig": -1949
+        "natural": 2443,
+        "netmig": -232
       },
       "2023": {
-        "natural": 2631,
-        "netmig": 5804
+        "natural": 2732,
+        "netmig": 8391
       },
       "2024": {
-        "natural": 2624,
-        "netmig": 9410
+        "natural": 2875,
+        "netmig": 9702
+      },
+      "2025": {
+        "natural": 2859,
+        "netmig": 230
       }
     },
     "cum": {
-      "natural": 34497,
-      "netmig": 2846,
-      "total": 37343
+      "natural": 37604,
+      "netmig": 7455,
+      "total": 45059
     }
   }
 }

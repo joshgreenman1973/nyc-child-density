@@ -1,15 +1,20 @@
 """
 Build docs/components_of_change.json: cumulative natural change (births minus
-deaths) and net migration for each county in the study area, 2011-2024.
+deaths) and net migration for each county in the study area, 2011-2025.
 
 Sources (downloaded on demand, so this is reproducible from a clean checkout):
   - Vintage 2019 county estimates for 2011-2019 : NATURALINC<year>, NETMIG<year>
-  - Vintage 2024 county estimates for 2020-2024 : NATURALCHG<year>, NETMIG<year>
+  - Vintage 2025 county estimates for 2020-2025 : NATURALCHG<year>, NETMIG<year>
 
 The two vintages sit on different population bases (Vintage 2019 was never
 revised to the 2020 census), so the 2019/2020 seam is a real discontinuity.
 It is disclosed on the page; splicing is still the only way to get a continuous
-2011-2024 series out of published Census files.
+series out of published Census files.
+
+Always take the post-2020 half from the NEWEST published vintage, not the one
+that happens to match the map's ACS endyear. Each vintage revises the previous
+one, sometimes materially: Vintage 2025 moved the national under-18 count for
+2024 down by roughly 580,000 from what Vintage 2024 reported.
 """
 
 import csv
@@ -24,8 +29,8 @@ WEB = ROOT / "docs"
 
 V2019_URL = ("https://www2.census.gov/programs-surveys/popest/datasets/"
              "2010-2019/counties/totals/co-est2019-alldata.csv")
-V2024_URL = ("https://www2.census.gov/programs-surveys/popest/datasets/"
-             "2020-2024/counties/totals/co-est2024-alldata.csv")
+V2025_URL = ("https://www2.census.gov/programs-surveys/popest/datasets/"
+             "2020-2025/counties/totals/co-est2025-alldata.csv")
 
 NYC_FIPS = {"36005", "36047", "36061", "36081", "36085"}
 
@@ -37,7 +42,7 @@ STUDY = [
     ("34", "017", "Hudson"), ("34", "023", "Middlesex"), ("34", "039", "Union"),
 ]
 
-FIRST_YEAR, SEAM, LAST_YEAR = 2011, 2020, 2024
+FIRST_YEAR, SEAM, LAST_YEAR = 2011, 2020, 2025
 
 
 def fetch_csv(url):
@@ -64,7 +69,7 @@ def main():
 
     for url, years, nat_col in [
         (V2019_URL, range(FIRST_YEAR, SEAM), "NATURALINC"),
-        (V2024_URL, range(SEAM, LAST_YEAR + 1), "NATURALCHG"),
+        (V2025_URL, range(SEAM, LAST_YEAR + 1), "NATURALCHG"),
     ]:
         print(f"fetching {url.rsplit('/', 1)[1]}...")
         seen = set()
