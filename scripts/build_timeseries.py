@@ -57,11 +57,19 @@ def load_nhgis():
                 out.setdefault(gj, {})[dyear] = float(v)
         return out
 
-    # Fallback: nominal join
-    df = pd.read_csv(
-        DATA / "nhgis_unpacked/nhgis0001_csv/nhgis0001_ts_nominal_tract.csv",
-        dtype=str,
-    )
+    # Fallback: nominal join against the raw NHGIS extract.
+    nominal = DATA / "nhgis_unpacked/nhgis0001_csv/nhgis0001_ts_nominal_tract.csv"
+    if not nominal.exists():
+        raise SystemExit(
+            f"Neither {norm_path.name} nor the raw NHGIS extract is present.\n"
+            f"  looked for: {norm_path}\n"
+            f"              {nominal}\n"
+            "normalized_counts.json is committed to the repo precisely so this\n"
+            "works from a clean checkout — if it is missing, the checkout is\n"
+            "incomplete or .gitignore stopped tracking it. Rebuilding it from\n"
+            "scratch needs an IPUMS API key: fetch_nhgis.py, poll_nhgis.py,\n"
+            "then build_crosswalk.py.")
+    df = pd.read_csv(nominal, dtype=str)
     df = df[df.apply(lambda r: (r["STATEFP"], r["COUNTYFP"]) in WANTED_COUNTIES, axis=1)].copy()
     out = {}
     for _, r in df.iterrows():
@@ -126,6 +134,11 @@ def load_total_acs():
 def load_geom():
     frames = []
     for state_zip in ["tracts_2010_36.zip", "tracts_2010_34.zip"]:
+        if not (DATA / state_zip).exists():
+            raise SystemExit(
+                f"Missing {DATA / state_zip}. This TIGER archive is committed to\n"
+                "the repo so a clean checkout can build; refetch with "
+                "fetch_tracts.py if it is genuinely gone.")
         g = gpd.read_file(f"zip://{DATA / state_zip}")
         if g.crs is None:
             g = g.set_crs(epsg=4269)

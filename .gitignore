@@ -1,4 +1,14 @@
-data/
+# data/ holds large intermediates that are cheap to refetch, so it stays out of
+# the repo — EXCEPT the handful of inputs build_timeseries.py cannot rebuild on
+# its own. Without those committed, a fresh checkout (i.e. every GitHub Actions
+# run) fails at load_nhgis(), because the NHGIS crosswalk needs an IPUMS API key
+# and an async extract, and the clip mask is assembled from several TIGER
+# downloads that are not part of the refresh chain.
+data/*
+!data/tracts_2010_34.zip
+!data/tracts_2010_36.zip
+!data/clip_mask.geojson
+!data/normalized_counts.json
 *.pyc
 __pycache__/
 .DS_Store
