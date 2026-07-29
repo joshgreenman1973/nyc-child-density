@@ -171,10 +171,13 @@ def main():
             per_year[ey] = fetch_acs(ey)
             cache.write_text(json.dumps(per_year[ey]))
 
-    # Pivot: tracts -> band -> year -> count
+    # Pivot: tracts -> band -> year -> count.
+    # Iterate the geoids in sorted order, not set order: Python set iteration
+    # varies between runs and machines, which made every CI run rewrite this
+    # 2MB file with identical values in a different key order.
     tracts = {}
     years = sorted(per_year.keys())
-    for geoid in wanted_geoids:
+    for geoid in sorted(wanted_geoids):
         rec = {b: {} for b in BANDS}
         has_any = False
         for y in years:

@@ -268,10 +268,37 @@ def main():
 
     print(f"  {len(features)} tracts with complete time series")
 
-    # Write base geom
-    (WEB / "tracts_base.geojson").write_text(
-        json.dumps({"type": "FeatureCollection", "features": features})
-    )
+    # Write base geom — but only if the tract set actually changed.
+    #
+    # The simplify()/difference() calls above are GEOS-version dependent: the
+    # same inputs on macOS and on ubuntu-latest keep a slightly different set of
+    # vertices (identical coordinates where the counts agree, and identical
+    # land_sqmi either way, since area is computed before simplification). Left
+    # alone, that made every CI run rewrite this 3MB file and push a commit even
+    # when no new data had been published, so the "nothing new" no-op never
+    # fired and a real change would have been invisible in the noise.
+    #
+    # Geometry only genuinely changes when the clip mask or the TIGER inputs
+    # change, and both of those move land_sqmi — which is what we compare on.
+    base_path = WEB / "tracts_base.geojson"
+    new_props = {f["properties"]["gisjoin"]: f["properties"] for f in features}
+    unchanged = False
+    if base_path.exists():
+        try:
+            old = json.loads(base_path.read_text())
+            old_props = {f["properties"]["gisjoin"]: f["properties"]
+                         for f in old.get("features", [])}
+            unchanged = old_props == new_props
+        except (ValueError, KeyError):
+            unchanged = False
+    if unchanged:
+        print("  tract set and land areas unchanged — keeping existing "
+              "tracts_base.geojson (avoids GEOS-version churn)")
+    else:
+        base_path.write_text(
+            json.dumps({"type": "FeatureCollection", "features": features})
+        )
+        print(f"  wrote {base_path.name}")
 
     # Write density time series (density = count / area)
     areas = geom.set_index("gisjoin")["land_sqmi"].to_dict()
