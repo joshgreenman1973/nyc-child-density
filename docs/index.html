@@ -920,11 +920,11 @@ function bandHasYear(y) {
 // ---------- map ----------
 const map = L.map("map", { zoomControl: true, preferCanvas: true })
   .setView([40.78, -73.95], 10);
-L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png", {
+L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png?key=cb1_2r82_1_ae4e70b6166057bc41b89638", {
   attribution: "&copy; OpenStreetMap &copy; CARTO",
   subdomains: "abcd", maxZoom: 18,
 }).addTo(map);
-L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png", {
+L.tileLayer("https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png?key=cb1_2r82_1_ae4e70b6166057bc41b89638", {
   subdomains: "abcd", maxZoom: 18, pane: "shadowPane",
 }).addTo(map);
 
