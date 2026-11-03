@@ -9,7 +9,7 @@ across New York City and every bordering county in New York and New Jersey.
 
 - Decennial census anchors for 1970, 1980, 1990, 2000, 2010, 2020 from IPUMS NHGIS
   (time series table D08, "Persons by Age: Children and Adults").
-- Annual ACS 5-year estimates for endyears 2011 through 2024, table B01001.
+- Annual American Community Survey (ACS) 5-year estimates for endyears 2011 through 2024, table B01001.
   The latest endyear is auto-detected, so a new Census release flows through
   without editing any script or the page.
 - Two view modes:
@@ -19,7 +19,7 @@ across New York City and every bordering county in New York and New Jersey.
 
 ## Study area
 
-Five boroughs of NYC plus: Westchester, Nassau (NY); Bergen, Hudson, Union,
+The five boroughs of New York City plus: Westchester, Nassau (NY); Bergen, Hudson, Union,
 Middlesex (NJ).
 
 ## Methodology
@@ -29,7 +29,7 @@ Short version:
 
 - Geometry is on 2010 census tract boundaries (TIGER cartographic 500k).
 - Between decennial anchors before 2011, annual values are linearly interpolated.
-- From 2011 on, every year is a real ACS measurement.
+- From 2011 on, every year is a measured ACS estimate.
 - NHGIS decennial values join 2010 tracts by nominal tract code; true
   population-weighted normalization via NHGIS crosswalks is a future enhancement.
 
