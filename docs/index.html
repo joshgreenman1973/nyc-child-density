@@ -519,64 +519,72 @@
       <div class="kicker-small">Classroom view</div>
       <h2 class="enroll-title">The schools they attend have been shrinking, too</h2>
       <p class="enroll-dek">
-        85 years of K&ndash;12 enrollment, across every sector — traditional public,
-        charter, parochial, independent and homeschool.
+        Twenty-six years of K&ndash;12 enrollment in the five boroughs, from the state&rsquo;s October counts:
+        district public, charter, religious and independent private schools, and children taught at home.
       </p>
     </div>
     <div class="enroll-grid">
       <div class="enroll-chart-wrap">
         <div class="chart-legend">
-          <span class="leg"><span class="sw" style="background:#2b3a4a"></span>Traditional public</span>
+          <span class="leg"><span class="sw" style="background:#2b3a4a"></span>District public</span>
           <span class="leg"><span class="sw" style="background:#c27a3a"></span>Charter</span>
-          <span class="leg"><span class="sw" style="background:#7a6a55"></span>Religious / parochial</span>
-          <span class="leg"><span class="sw" style="background:#a89b80"></span>Independent (secular)</span>
-          <span class="leg"><span class="sw" style="background:#c9bfa7"></span>Homeschool</span>
+          <span class="leg"><span class="sw" style="background:#7a6a55"></span>Religious private</span>
+          <span class="leg"><span class="sw" style="background:#a89b80"></span>Independent private</span>
+          <span class="leg"><span class="sw" style="background:#c9bfa7"></span>Taught at home</span>
         </div>
         <svg id="enroll-chart" viewBox="0 0 760 320" preserveAspectRatio="none"></svg>
-        <div class="chart-cap">Stacked K&ndash;12 enrollment in the five boroughs, 1940&ndash;2025.
-          Pre-2000 values are historical estimates. Post-2000 values are compiled from state and
-          city reporting across five sectors that do not share a single reporting calendar or
-          definition, and the public and charter series here run a few percent above the New York State Education Department's (NYSED)
-          combined Basic Educational Data System (BEDS) count for the same years; read the shape of the series rather than any
-          single year's level. The grade-level figures in the panel below come straight from NYSED
-          and are exact.</div>
+        <div class="chart-cap">Stacked K&ndash;12 enrollment in schools located in the five boroughs,
+          2000&ndash;01 to 2025&ndash;26. District and charter counts are the New York State Education
+          Department&rsquo;s (NYSED) October enrollment counts; private-school counts are NYSED&rsquo;s nonpublic
+          enrollment for kindergarten to grade 12; children taught at home are NYSED&rsquo;s count for New York City,
+          reported only from 2014&ndash;15, so that layer starts there.</div>
       </div>
       <div class="enroll-stats">
         <div class="stat">
-          <div class="stat-num" id="stat-peak">1.55M</div>
-          <div class="stat-lab">Peak K&ndash;12 enrollment <span class="muted">(1970)</span></div>
+          <div class="stat-num" id="stat-peak">1.32M</div>
+          <div class="stat-lab">K&ndash;12 students, all sectors <span class="muted" id="stat-peak-yr">(2000&ndash;01)</span></div>
         </div>
         <div class="stat">
-          <div class="stat-num" id="stat-now">1.22M</div>
-          <div class="stat-lab">K&ndash;12 today <span class="muted">(2025)</span></div>
+          <div class="stat-num" id="stat-now">1.16M</div>
+          <div class="stat-lab">K&ndash;12 students, all sectors <span class="muted" id="stat-now-yr">(2025&ndash;26)</span></div>
         </div>
         <div class="stat">
-          <div class="stat-num loss" id="stat-drop">&minus;21%</div>
-          <div class="stat-lab">Change since the 1970 peak</div>
+          <div class="stat-num loss" id="stat-drop">&minus;12%</div>
+          <div class="stat-lab">Change since 2000&ndash;01</div>
         </div>
         <div class="stat stat-wide">
           <div class="stat-sub-hed">Since 2019</div>
           <div class="stat-sub-body">
-            Kindergarten enrollment is down <b>14%</b> and grade&nbsp;1 down <b>14%</b> — from
-            77,481 and 80,741 in 2018&ndash;19 to 66,843 and 69,410 in 2024&ndash;25, on NYSED BEDS
-            counts for New York City public schools including charters. The drops sit at the front end of the
-            pipeline rather than in the high-school grades, which points to fewer births and
-            out-migration of young families more than dropout or high-school exodus.
+            In the city&rsquo;s district public schools, kindergarten enrollment fell <b>20%</b> and grade&nbsp;1
+            <b>16%</b> between 2019&ndash;20 and 2025&ndash;26, from 65,370 and 66,041 to 52,525 and 55,350
+            (Department of Education Demographic Snapshot, Oct. 31 audited register, charter schools not included).
+            Grade&nbsp;12 fell 3%. The losses are concentrated in the early grades, which points to fewer births
+            and young families leaving more than to students dropping out of high school.
+          </div>
+        </div>
+        <div class="stat stat-wide">
+          <div class="stat-sub-hed">This fall</div>
+          <div class="stat-sub-body">
+            Preliminary Department of Education figures released Nov. 16, 2026, put K&ndash;12 enrollment in its
+            schools at <b>766,900</b> as of Oct. 31, about 23,000 (2.9%) fewer than a year earlier, charter
+            schools not included
+            (<a href="https://www.nytimes.com/2026/11/16/nyregion/enrollment-nyc-schools-declines.html">The New York Times</a>,
+            <a href="https://ny1.com/nyc/all-boroughs/education/2026/11/16/nyc-public-school-enrollment-continues-to-fall">NY1</a>).
+            The figures have not been audited and are not on the state&rsquo;s basis, so they are not in the chart.
           </div>
         </div>
         <div class="stat stat-wide">
           <div class="stat-sub-hed">Chronic absenteeism</div>
           <div class="stat-sub-body">
-            The share of students missing 10%+ of school days rose from <b>26.5%</b> pre-pandemic
-            (2018&ndash;19) to a post-pandemic peak of <b>40%</b> (2021&ndash;22), eased to
-            <b>34.8%</b> in 2023&ndash;24, and still sat near <b>33%</b> in 2024&ndash;25 &mdash;
-            the fiscal 2025 Mayor&rsquo;s Management Report, released September 2025.
+            The share of district students who attended 90% of school days or less rose from <b>26.5%</b> in
+            2018&ndash;19 to <b>40.3%</b> in 2021&ndash;22, then eased to <b>34.8%</b> in 2023&ndash;24 and
+            <b>33.3%</b> in 2024&ndash;25 (Department of Education end-of-year attendance data, all grades,
+            Districts 1&ndash;32 and 75).
           </div>
         </div>
         <div class="stat-attr">
-          Sources: NY State Education Dept., NYC Independent Budget Office, DOE InfoHub, NYU Research
-          Alliance for NYC Schools. &nbsp;Extended view and methodology at
-          <a href="https://joshgreenman1973.github.io/experiments/nyc-enrollment/">the NYC enrollment project</a>.
+          Sources: New York State Education Department; New York City Department of Education. &nbsp;Extended view and methodology at
+          <a href="https://joshgreenman1973.github.io/nyc-schools-atlas/enrollment/">the schools atlas enrollment page</a>.
         </div>
       </div>
     </div>
@@ -1862,30 +1870,36 @@ Promise.all([
 });
 
 // ---------- enrollment embed ----------
-// Year, [public, charter, religious, independent, homeschool] (thousands)
+// School year (fall), [district, charter, religious, independent, taught at home] (thousands).
+// Copied from the schools atlas enrollment page (sectorData), New York State Education Department counts;
+// "taught at home" is reported from 2014-15 only, 0 before that.
 const ENROLL = [
-  [1940,980,0,250,20,0],[1941,965,0,252,20,0],[1942,950,0,254,20.5,0],[1943,935,0,256,20.5,0],
-  [1944,920,0,258,21,0],[1945,900,0,260,21,0],[1946,895,0,265,21.5,0],[1947,890,0,270,22,0],
-  [1948,895,0,275,23,0],[1949,905,0,280,24,0],[1950,920,0,285,25,0],[1951,930,0,295,25,0],
-  [1952,940,0,305,25,0],[1953,950,0,315,25,0],[1954,960,0,325,25,0],[1955,975,0,335,25.5,0],
-  [1956,990,0,345,26,0],[1957,1005,0,355,26.5,0],[1958,1020,0,365,27,0],[1959,1035,0,375,27.5,0],
-  [1960,1050,0,385,28,0],[1961,1060,0,390,28.5,0],[1962,1070,0,395,29,0],[1963,1080,0,398,29.5,0],
-  [1964,1090,0,400,30,0],[1965,1100,0,395,30.5,0],[1966,1110,0,390,31,0],[1967,1115,0,385,31,0],
-  [1968,1120,0,380,31,0],[1969,1125,0,380,31,0],[1970,1130,0,385,31,0],[1971,1125,0,385,30.5,0],
-  [1972,1115,0,385,30,0],[1973,1105,0,385,29.5,0],[1974,1095,0,385,29,0],[1975,1080,0,385,30,0.1],
-  [1976,1060,0,375,30.5,0.15],[1977,1040,0,365,31,0.2],[1978,1010,0,355,31,0.25],[1979,980,0,345,31.5,0.3],
-  [1980,960,0,335,31.5,0.4],[1981,945,0,325,31.5,0.5],[1982,938,0,315,32,0.6],[1983,935,0,305,32,0.7],
-  [1984,933,0,295,32,0.8],[1985,934,0,285,32,0.9],[1986,936,0,278,32,1],[1987,940,0,273,32,1.1],
-  [1988,943,0,267,33,1.2],[1989,948,0,262,33,1.3],[1990,956,0,256,34,1.4],[1991,965,0,254,34,1.5],
-  [1992,978,0,250,35,1.6],[1993,990,0,247,35,1.7],[1994,1002,0,244,36,1.8],[1995,1014,0,242,36,1.9],
-  [1996,1030,0,238,37,2],[1997,1045,0,235,37,2.2],[1998,1058,0,231,38,2.4],[1999,1065,1,229,38,2.6],
-  [2000,1073,2.5,226,39,2.8],[2001,1068,4,224,39,3],[2002,1060,6,221,40,3.2],[2003,1055,8,219,40,3.4],
-  [2004,1050,10,216,41,3.6],[2005,1045,12.5,215,41,3.8],[2006,1040,15,213,42,4],[2007,1035,20,210,42,4.2],
-  [2008,1030,25,206,43,4.5],[2009,1025,32,204,43,4.8],[2010,1020,40,205,43,5],[2011,1015,50,203,43,5.2],
-  [2012,1005,60,197.9,44,5.5],[2013,1002,70,196,44,5.8],[2014,1000,83,194,44,6.1],[2015,995,95,192,44,6.4],
-  [2016,990,106,191,44,6.8],[2017,985,114,190,44,7.1],[2018,975,120,188,45,7.5],[2019,965,129,185,45,7.8],
-  [2020,935,135,180,45,12],[2021,890,142,175,45,14.8],[2022,870,145,173,45,15.5],[2023,855,148,170,45,16],
-  [2024,845,150.5,169,45,16.5],[2025,835,152,168,45,16.8]
+  [2000,1048.17,1.821,233.408,34.72,0],
+  [2001,1040.917,3.141,233.422,34.936,0],
+  [2002,1030,4.442,230.406,34.594,0],
+  [2003,1025.816,5.849,226.091,35.452,0],
+  [2004,1017.951,7.733,223.417,36.198,0],
+  [2005,996.25,11.825,219.815,36.382,0],
+  [2006,978.416,15.639,216.968,36.592,0],
+  [2007,969.431,19.815,213.499,37.579,0],
+  [2008,960.032,26.374,211.707,37.619,0],
+  [2009,969.266,32.048,206.157,37.405,0],
+  [2010,973.694,40.407,202.752,38.824,0],
+  [2011,965.057,47.738,201.12,40.737,0],
+  [2012,963.019,58.493,198.665,41.205,0],
+  [2013,959.578,71.422,196.147,41.634,0],
+  [2014,957.672,84.179,195.357,42.55,3.667],
+  [2015,955.003,94.332,193.928,42.945,3.157],
+  [2016,944.709,103.908,191.583,44.08,4.128],
+  [2017,936.807,112.725,187.058,44.317,4.533],
+  [2018,921.388,118.886,185.64,44.405,5.275],
+  [2019,904.72,128.949,182.323,44.346,6.758],
+  [2020,869.362,138.248,178.069,42.545,8.982],
+  [2021,818.129,139.309,176.127,42.458,12.87],
+  [2022,797.844,139.274,174.866,42.118,14.781],
+  [2023,794.626,143.563,174.577,42.706,13.991],
+  [2024,799.752,146.995,174.078,42.373,15.283],
+  [2025,780.402,149.87,172.449,41.5,13.079]
 ];
 (function drawEnroll(){
   const svg = document.getElementById("enroll-chart");
@@ -1919,7 +1933,7 @@ const ENROLL = [
   });
   // Axes
   const gridlines = [];
-  const yTicks = [0, 400, 800, 1200, 1600];
+  const yTicks = [0, 400, 800, 1200];
   yTicks.forEach(v => {
     if (v > tmax) return;
     const y = yAt(v);
@@ -1927,18 +1941,18 @@ const ENROLL = [
     gridlines.push(`<text x="${PL-6}" y="${y+3}" text-anchor="end" font-family="Fraunces,serif" font-size="10" fill="#6b6355">${v === 0 ? "0" : (v/1000).toFixed(1).replace(/\.0$/,"") + "M"}</text>`);
   });
   // X-axis year labels
-  const xTicks = [1940, 1960, 1970, 1980, 2000, 2020];
+  const xTicks = [2000, 2005, 2010, 2015, 2020, 2025];
   xTicks.forEach(yr => {
     const x = xAt(yr);
     gridlines.push(`<line x1="${x}" x2="${x}" y1="${H-PB}" y2="${H-PB+4}" stroke="#6b6355" stroke-width="0.7"/>`);
-    gridlines.push(`<text x="${x}" y="${H-PB+16}" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b6355">${yr}</text>`);
+    gridlines.push(`<text x="${x}" y="${H-PB+16}" text-anchor="${yr === xTicks[xTicks.length-1] ? "end" : "middle"}" font-family="Inter,sans-serif" font-size="10" fill="#6b6355">${yr}&ndash;${String(yr+1).slice(2)}</text>`);
   });
   // Peak annotation
   const peakIdx = totals.indexOf(Math.max(...totals));
   const peakX = xAt(years[peakIdx]), peakY = yAt(totals[peakIdx]);
   const ann = `
     <line x1="${peakX}" x2="${peakX}" y1="${peakY-4}" y2="${peakY-22}" stroke="#1a1915" stroke-width="0.7"/>
-    <text x="${peakX+6}" y="${peakY-14}" font-family="Fraunces,serif" font-size="11" fill="#1a1915">${years[peakIdx]} peak · ${(totals[peakIdx]/1000).toFixed(2)}M</text>
+    <text x="${peakX+6}" y="${peakY-14}" font-family="Fraunces,serif" font-size="11" fill="#1a1915">${years[peakIdx]}&ndash;${String(years[peakIdx]+1).slice(2)} · ${(totals[peakIdx]/1000).toFixed(2)}M</text>
   `;
   svg.innerHTML = gridlines.join("") + parts.join("") + ann;
 
